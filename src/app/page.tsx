@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Send, User, LogOut, Scale, Wrench, Menu } from 'lucide-react';
+import { Send, User, LogOut, Scale, Wrench } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ChatHistorySidebar from '@/components/ChatHistorySidebar';
 import Sidebar from '@/components/Sidebar';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import TaskBar from '@/components/TaskBar';
 import { useSidebarStore } from '@/store/sidebar';
 
 interface Message {
@@ -303,6 +304,9 @@ export default function LawyerChat() {
 
   return (
     <div className={`flex h-screen ${isDarkMode ? 'bg-[#343541]' : 'bg-gray-50'}`}>
+      {/* Universal TaskBar - Always visible for all users */}
+      <TaskBar />
+      
       {/* Sidebar - Only show for logged-in users */}
       {session?.user && (
         <Sidebar
@@ -315,20 +319,12 @@ export default function LawyerChat() {
         />
       )}
 
-      {/* Main Content - Adjust margin when sidebar is open */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${session?.user && isExpanded ? 'md:ml-[260px]' : 'ml-0'}`}>
+      {/* Main Content - Adjust margin for taskbar and sidebar */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ml-[56px] ${session?.user && isExpanded ? 'md:ml-[316px]' : ''}`}>
         {/* Header */}
         <div className={`${isDarkMode ? 'bg-[#202123] border-gray-700' : 'bg-white border-gray-200'} border-b px-6 py-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              {!session?.user && (
-                <button
-                  onClick={toggleSidebar}
-                  className={`md:hidden p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                >
-                  <Menu size={20} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
-                </button>
-              )}
               <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : ''}`} style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
             </div>
             

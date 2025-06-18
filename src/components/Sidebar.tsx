@@ -66,7 +66,7 @@ export default function Sidebar({
       {/* Sidebar */}
       <div 
         ref={sidebarRef}
-        className={`fixed left-0 top-0 h-screen bg-[#f8f9fa] dark:bg-dark-sidebar border-r border-gray-200 dark:border-dark-border flex flex-col z-[998] transition-all duration-300 ease-in-out`}
+        className={`fixed left-[56px] top-0 h-screen bg-[#f8f9fa] dark:bg-dark-sidebar border-r border-gray-200 dark:border-dark-border flex flex-col z-[998] transition-all duration-300 ease-in-out`}
         style={{
           width: isExpanded ? '250px' : '60px',
           transform: isMobile && !isExpanded ? 'translateX(-100%)' : 'translateX(0)',
