@@ -2,7 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Send, User, LogOut, Scale, History, Wrench } from 'lucide-react';
+import { Send, User, LogOut, Scale, Wrench } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import ChatHistorySidebar from '@/components/ChatHistorySidebar';
 
 interface Message {
   id: number;
@@ -18,21 +21,14 @@ export default function LawyerChat() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Dynamic input sizing based on chat content
   const hasMessages = messages.length > 0; // Any messages present
-
-  // Mock chat history for logged-in users
-  const [chatHistory] = useState([
-    'Contract law questions',
-    'Employment regulations',
-    'Intellectual property',
-    'Business formation',
-    'Real estate law'
-  ]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,8 +38,111 @@ export default function LawyerChat() {
     scrollToBottom();
   }, [messages]);
 
+  // Fetch chat history on mount for logged-in users
+  useEffect(() => {
+    if (session?.user) {
+      fetchChatHistory();
+    }
+  }, [session]);
+
+  const fetchChatHistory = async () => {
+    try {
+      const response = await fetch('/api/chats');
+      if (response.ok) {
+        const data = await response.json();
+        setChatHistory(data);
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+    }
+  };
+
+  const createNewChat = async () => {
+    if (!session?.user) return;
+    
+    try {
+      const response = await fetch('/api/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'New Chat' })
+      });
+      
+      if (response.ok) {
+        const newChat = await response.json();
+        setCurrentChatId(newChat.id);
+        setMessages([]);
+        await fetchChatHistory();
+      }
+    } catch (error) {
+      console.error('Error creating chat:', error);
+    }
+  };
+
+  const selectChat = async (chatId: string) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}`);
+      if (response.ok) {
+        const chat = await response.json();
+        setCurrentChatId(chatId);
+        
+        // Convert database messages to frontend format
+        const convertedMessages = chat.messages.map((msg: any) => ({
+          id: Date.now() + Math.random(),
+          sender: msg.role as 'user' | 'assistant',
+          text: msg.content,
+          references: msg.references,
+          timestamp: new Date(msg.createdAt)
+        }));
+        
+        setMessages(convertedMessages);
+      }
+    } catch (error) {
+      console.error('Error fetching chat:', error);
+    }
+  };
+
+  const deleteChat = async (chatId: string) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        if (currentChatId === chatId) {
+          setCurrentChatId(null);
+          setMessages([]);
+        }
+        await fetchChatHistory();
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
+  const saveMessage = async (role: string, content: string, references: string[] = []) => {
+    if (!session?.user || !currentChatId) return;
+    
+    try {
+      await fetch(`/api/chats/${currentChatId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, content, references })
+      });
+      
+      // Update chat history to reflect new message
+      await fetchChatHistory();
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+  };
+
   const handleSend = async () => {
     if (!inputText.trim()) return;
+
+    // Create new chat if needed (for logged-in users)
+    if (session?.user && !currentChatId && messages.length === 0) {
+      await createNewChat();
+    }
 
     const userMessage: Message = {
       id: Date.now(),
@@ -53,6 +152,10 @@ export default function LawyerChat() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Save user message to database
+    await saveMessage('user', inputText);
+    
     setInputText('');
     setIsLoading(true);
 
@@ -67,60 +170,90 @@ export default function LawyerChat() {
     };
 
     setMessages(prev => [...prev, assistantMessage]);
-    setIsLoading(false);
 
-    // Mock streaming response
-    let fullResponseText = 'Based on your question, here are the relevant legal considerations and precedents.';
-    
-    if (selectedTool === 'recursive-summary') {
-      fullResponseText = 'Recursive Summary: Starting with fundamental legal principles, this matter involves multiple layers of jurisprudence. Key points: 1) Statutory framework applies 2) Case law supports specific interpretation 3) Regulatory compliance required. The recursive examination reveals interconnected legal concepts spanning constitutional law, statutory interpretation, and case precedents.';
-    }
+    try {
+      // Call the API endpoint
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputText,
+          tool: selectedTool,
+          sessionId: session?.user?.email || 'anonymous',
+          userId: session?.user?.email
+        }),
+      });
 
-    // Stream the response text character by character
-    let currentText = '';
-    for (let i = 0; i < fullResponseText.length; i++) {
-      currentText += fullResponseText[i];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Handle streaming response
+      if (response.headers.get('content-type')?.includes('text/event-stream')) {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (reader) {
+          let currentText = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            currentText += chunk;
+            
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === assistantId 
+                  ? { ...msg, text: currentText }
+                  : msg
+              )
+            );
+          }
+        }
+      } else {
+        // Handle regular JSON response
+        const data = await response.json();
+        
+        // Update assistant message with response
+        const assistantText = data.message || data.response || 'I received your message. Processing...';
+        const assistantReferences = data.references || [];
+        
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === assistantId 
+              ? { 
+                  ...msg, 
+                  text: assistantText, 
+                  references: assistantReferences
+                }
+              : msg
+          )
+        );
+        
+        // Save assistant message to database
+        await saveMessage('assistant', assistantText, assistantReferences);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
       
+      // Update assistant message with error
       setMessages(prev => 
         prev.map(msg => 
           msg.id === assistantId 
-            ? { ...msg, text: currentText }
+            ? { 
+                ...msg, 
+                text: 'I apologize, but I encountered an error processing your request. Please try again later or contact support if the issue persists.' 
+              }
             : msg
         )
       );
-      
-      // Add slight delay between characters for typing effect
-      await new Promise(resolve => setTimeout(resolve, 20));
+    } finally {
+      setIsLoading(false);
+      setSelectedTool(null);
     }
-
-    // Add a small pause before streaming sources
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Mock sources from database
-    const sources = [
-      'https://example.com/case-law-smith-v-jones-2023',
-      'https://example.com/statute-employment-act-section-12',
-      'https://example.com/regulation-cfr-title-29-part-1630'
-    ];
-
-    // Stream sources one by one
-    const currentSources: string[] = [];
-    for (let i = 0; i < sources.length; i++) {
-      currentSources.push(sources[i]);
-      
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === assistantId 
-            ? { ...msg, references: [...currentSources] }
-            : msg
-        )
-      );
-      
-      // Add delay between sources
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    setSelectedTool(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -133,46 +266,21 @@ export default function LawyerChat() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Only for logged-in users */}
-      {session && (
-        <div className={`w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${showHistory ? '' : 'hidden lg:flex'}`}>
-          {/* Logo Section */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
-                <Scale className="text-white" size={20} />
-              </div>
-              <div>
-                <h2 className="font-bold text-lg text-gray-900">AI Legal</h2>
-                <p className="text-xs text-yellow-600 font-medium">Professional</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Chat History */}
-          <div className="p-4 flex-1">
-            <div className="mb-6">
-              <div className="flex items-center space-x-2 mb-3 text-gray-600">
-                <History size={16} />
-                <span className="font-medium text-sm">Chat History</span>
-              </div>
-              <div className="space-y-2">
-                {chatHistory.map((chat, index) => (
-                  <button
-                    key={index}
-                    className="w-full text-left p-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors duration-200 truncate"
-                  >
-                    {chat}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Chat History Sidebar */}
+      <ChatHistorySidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        chatHistory={chatHistory}
+        currentChatId={currentChatId || undefined}
+        onChatSelect={selectChat}
+        onNewChat={createNewChat}
+        onDeleteChat={deleteChat}
+        isLoggedIn={!!session?.user}
+      />
+      
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Main Content - Adjust margin when sidebar is open */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'md:ml-[320px]' : 'ml-0'}`}>
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -181,16 +289,6 @@ export default function LawyerChat() {
             </div>
             
             <div className="flex items-center space-x-3">
-              {/* History toggle for mobile logged-in users */}
-              {session && (
-                <button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <History size={20} />
-                </button>
-              )}
-
               {status === 'loading' ? (
                 <div className="text-gray-500">Loading...</div>
               ) : session ? (
@@ -254,7 +352,42 @@ export default function LawyerChat() {
                       <User size={16} className="text-white mt-1 flex-shrink-0 order-2" />
                     )}
                     <div className="flex-1">
-                      <p className="text-sm leading-relaxed">{message.text}</p>
+                      {message.sender === 'user' ? (
+                        <p className="text-sm leading-relaxed">{message.text}</p>
+                      ) : (
+                        <div className="text-sm leading-relaxed">
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                            h1: ({children}) => <h1 className="text-xl font-bold mb-3 mt-4 text-gray-900">{children}</h1>,
+                            h2: ({children}) => <h2 className="text-lg font-semibold mb-2 mt-3 text-gray-900">{children}</h2>,
+                            h3: ({children}) => <h3 className="text-base font-semibold mb-2 mt-2 text-gray-800">{children}</h3>,
+                            p: ({children}) => <p className="mb-2 text-gray-800">{children}</p>,
+                            ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1 text-gray-800">{children}</ul>,
+                            ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1 text-gray-800">{children}</ol>,
+                            li: ({children}) => <li className="ml-2">{children}</li>,
+                            strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                            em: ({children}) => <em className="italic">{children}</em>,
+                            code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">{children}</code>,
+                            pre: ({children}) => <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto mb-2">{children}</pre>,
+                            blockquote: ({children}) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-2 text-gray-700">{children}</blockquote>,
+                            hr: () => <hr className="my-3 border-gray-300" />,
+                            a: ({href, children}) => (
+                              <a 
+                                href={href} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                          >
+                            {message.text}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                       
                       {/* Citation Display */}
                       {message.references && message.references.length > 0 && (
@@ -378,3 +511,4 @@ export default function LawyerChat() {
     </div>
   );
 }
+
