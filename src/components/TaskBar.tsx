@@ -73,14 +73,14 @@ export default function TaskBar() {
             style={{
               backgroundColor: '#C7A562',
               borderRadius: '50%',
-              width: '40px',
-              height: '40px',
+              width: '32px',
+              height: '32px',
             }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B59552'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A562'}
             aria-label="New Chat"
           >
-            <Plus size={20} strokeWidth={3} style={{ color: '#004A84' }} />
+            <Plus size={18} strokeWidth={3} style={{ color: '#004A84' }} />
           </button>
           {isExpanded && (
             <span 
@@ -109,14 +109,14 @@ export default function TaskBar() {
                 style={{
                   backgroundColor: '#C7A562',
                   borderRadius: '50%',
-                  width: '40px',
-                  height: '40px',
+                  width: '32px',
+                  height: '32px',
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B59552'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A562'}
                 aria-label={session ? 'User menu' : 'Sign in'}
               >
-                <span className="text-lg font-extrabold" style={{ color: '#004A84' }}>
+                <span className="text-base font-extrabold" style={{ color: '#004A84' }}>
                   {session ? getUserInitials() : '?'}
                 </span>
               </button>
