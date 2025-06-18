@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Send, User, LogOut, Scale, Wrench } from 'lucide-react';
+import { Send, User, LogOut, Scale, Wrench, Menu } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ChatHistorySidebar from '@/components/ChatHistorySidebar';
+import Sidebar from '@/components/Sidebar';
+import DarkModeToggle from '@/components/DarkModeToggle';
+import { useSidebarStore } from '@/store/sidebar';
 
 interface Message {
   id: number;
@@ -24,8 +27,8 @@ export default function LawyerChat() {
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { isExpanded, toggleSidebar, isDarkMode } = useSidebarStore();
   
   // Dynamic input sizing based on chat content
   const hasMessages = messages.length > 0; // Any messages present
@@ -265,30 +268,38 @@ export default function LawyerChat() {
 
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Chat History Sidebar */}
-      <ChatHistorySidebar
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        chatHistory={chatHistory}
-        currentChatId={currentChatId || undefined}
-        onChatSelect={selectChat}
-        onNewChat={createNewChat}
-        onDeleteChat={deleteChat}
-        isLoggedIn={!!session?.user}
-      />
-      
+    <div className={`flex h-screen ${isDarkMode ? 'bg-[#343541]' : 'bg-gray-50'}`}>
+      {/* Sidebar - Only show for logged-in users */}
+      {session?.user && (
+        <Sidebar
+          isExpanded={isExpanded}
+          onToggleExpand={toggleSidebar}
+          onNewChat={createNewChat}
+          chats={chatHistory}
+          currentChatId={currentChatId || undefined}
+          onChatSelect={selectChat}
+        />
+      )}
 
       {/* Main Content - Adjust margin when sidebar is open */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'md:ml-[320px]' : 'ml-0'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${session?.user && isExpanded ? 'md:ml-[260px]' : 'ml-0'}`}>
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className={`${isDarkMode ? 'bg-[#202123] border-gray-700' : 'bg-white border-gray-200'} border-b px-6 py-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <h1 className="text-xl font-semibold" style={{ color: '#004A84' }}>AI Legal</h1>
+              {!session?.user && (
+                <button
+                  onClick={toggleSidebar}
+                  className={`md:hidden p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  <Menu size={20} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
+                </button>
+              )}
+              <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : ''}`} style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
             </div>
             
             <div className="flex items-center space-x-3">
+              <DarkModeToggle />
               {status === 'loading' ? (
                 <div className="text-gray-500">Loading...</div>
               ) : session ? (
@@ -320,7 +331,7 @@ export default function LawyerChat() {
         </div>
 
         {/* Messages Window */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        <div className={`flex-1 overflow-y-auto px-6 py-4 space-y-6 ${isDarkMode ? 'bg-[#343541]' : ''}`}>
           {/* Welcome Message - Only show when no messages */}
           {messages.length === 0 && (
             <div className="flex items-start justify-center h-full pt-32">
@@ -339,12 +350,12 @@ export default function LawyerChat() {
                   className={`px-4 py-3 rounded-lg shadow-sm ${
                     message.sender === 'user'
                       ? 'text-white'
-                      : 'border border-gray-200 text-gray-900'
+                      : isDarkMode ? 'border border-gray-600 text-gray-100' : 'border border-gray-200 text-gray-900'
                   }`}
                   style={
                     message.sender === 'user' 
-                      ? { backgroundColor: '#226EA7' } 
-                      : { backgroundColor: '#C7A562' }
+                      ? { backgroundColor: isDarkMode ? '#2A5490' : '#226EA7' } 
+                      : { backgroundColor: isDarkMode ? '#B59552' : '#C7A562' }
                   }
                 >
                   <div className="flex items-start space-x-2">
@@ -359,25 +370,25 @@ export default function LawyerChat() {
                           <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             components={{
-                            h1: ({children}) => <h1 className="text-xl font-bold mb-3 mt-4 text-gray-900">{children}</h1>,
-                            h2: ({children}) => <h2 className="text-lg font-semibold mb-2 mt-3 text-gray-900">{children}</h2>,
-                            h3: ({children}) => <h3 className="text-base font-semibold mb-2 mt-2 text-gray-800">{children}</h3>,
-                            p: ({children}) => <p className="mb-2 text-gray-800">{children}</p>,
-                            ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1 text-gray-800">{children}</ul>,
-                            ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1 text-gray-800">{children}</ol>,
+                            h1: ({children}) => <h1 className={`text-xl font-bold mb-3 mt-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{children}</h1>,
+                            h2: ({children}) => <h2 className={`text-lg font-semibold mb-2 mt-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{children}</h2>,
+                            h3: ({children}) => <h3 className={`text-base font-semibold mb-2 mt-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</h3>,
+                            p: ({children}) => <p className={`mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</p>,
+                            ul: ({children}) => <ul className={`list-disc list-inside mb-2 space-y-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</ul>,
+                            ol: ({children}) => <ol className={`list-decimal list-inside mb-2 space-y-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</ol>,
                             li: ({children}) => <li className="ml-2">{children}</li>,
-                            strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                            strong: ({children}) => <strong className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{children}</strong>,
                             em: ({children}) => <em className="italic">{children}</em>,
-                            code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">{children}</code>,
-                            pre: ({children}) => <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto mb-2">{children}</pre>,
-                            blockquote: ({children}) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-2 text-gray-700">{children}</blockquote>,
-                            hr: () => <hr className="my-3 border-gray-300" />,
+                            code: ({children}) => <code className={`px-1 py-0.5 rounded text-sm font-mono ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>{children}</code>,
+                            pre: ({children}) => <pre className={`p-3 rounded-lg overflow-x-auto mb-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>{children}</pre>,
+                            blockquote: ({children}) => <blockquote className={`border-l-4 pl-4 italic my-2 ${isDarkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-700'}`}>{children}</blockquote>,
+                            hr: () => <hr className={`my-3 ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`} />,
                             a: ({href, children}) => (
                               <a 
                                 href={href} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 underline"
+                                className={`underline ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
                               >
                                 {children}
                               </a>
@@ -391,22 +402,22 @@ export default function LawyerChat() {
                       
                       {/* Citation Display */}
                       {message.references && message.references.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-gray-400">
-                          <h4 className="text-xs font-semibold text-gray-800 mb-2">Sources:</h4>
+                        <div className={`mt-3 pt-3 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-400'}`}>
+                          <h4 className={`text-xs font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>Sources:</h4>
                           <ol className="list-decimal list-inside space-y-1">
                             {message.references.map((ref, index) => (
-                              <li key={index} className="text-xs text-gray-800">
+                              <li key={index} className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                                 {session ? (
                                   <a 
                                     href={ref} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="text-blue-800 hover:text-blue-900 underline ml-1 transition-colors font-medium"
+                                    className={`underline ml-1 transition-colors font-medium ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-800 hover:text-blue-900'}`}
                                   >
                                     {ref}
                                   </a>
                                 ) : (
-                                  <span className="ml-1 text-gray-800">{ref}</span>
+                                  <span className={`ml-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>{ref}</span>
                                 )}
                               </li>
                             ))}
@@ -425,7 +436,7 @@ export default function LawyerChat() {
         </div>
 
         {/* Input Area */}
-        <div className={`bg-white border-t border-gray-200 transition-all duration-500 ${
+        <div className={`${isDarkMode ? 'bg-[#40414f] border-gray-700' : 'bg-white border-gray-200'} border-t transition-all duration-500 ${
           hasMessages ? 'px-6 py-4' : 'px-16 py-8'
         }`}>
           <div className="flex items-center space-x-3">
@@ -436,7 +447,7 @@ export default function LawyerChat() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask your legal question..."
                 rows={1}
-                className={`w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-500 text-gray-900 placeholder-gray-500 overflow-hidden ${
+                className={`w-full border ${isDarkMode ? 'border-gray-600 bg-[#40414f] text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-500 overflow-hidden ${
                   hasMessages 
                     ? 'px-4 py-3 pl-12 text-sm min-h-[44px]' 
                     : 'px-6 py-5 pl-14 text-lg min-h-[60px]'
@@ -460,7 +471,7 @@ export default function LawyerChat() {
                 <div className="relative">
                   <button
                     onClick={() => setShowToolsDropdown(!showToolsDropdown)}
-                    className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                    className={`p-1 ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
                     aria-label="Select tool"
                     title="Select tool"
                   >
@@ -469,14 +480,16 @@ export default function LawyerChat() {
                   
                   {/* Tools Dropdown */}
                   {showToolsDropdown && (
-                    <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10">
+                    <div className={`absolute bottom-full left-0 mb-2 w-48 ${isDarkMode ? 'bg-[#202123] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-lg py-2 z-10`}>
                       <button
                         onClick={() => {
                           setSelectedTool(selectedTool === 'recursive-summary' ? null : 'recursive-summary');
                           setShowToolsDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                          selectedTool === 'recursive-summary' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                        className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                          selectedTool === 'recursive-summary' 
+                            ? isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-50 text-blue-700'
+                            : isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
                         }`}
                       >
                         Recursive Summary
