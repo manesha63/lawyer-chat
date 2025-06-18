@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Menu, Home, MessageSquare, Wrench, BookOpen, Settings, HelpCircle, X } from 'lucide-react';
+import { Menu, MessageSquare, Wrench, BookOpen, HelpCircle, X } from 'lucide-react';
 import { useSidebarStore } from '@/store/sidebar';
 import { useRouter } from 'next/navigation';
 
@@ -26,11 +26,8 @@ export default function TaskBar() {
   }, [isExpanded]);
 
   const menuItems = [
-    { icon: Home, label: 'Home', action: () => router.push('/') },
-    { icon: MessageSquare, label: 'New Chat', action: () => window.location.reload() },
     { icon: Wrench, label: 'Legal Tools', action: () => {} },
     { icon: BookOpen, label: 'Documentation', action: () => {} },
-    { icon: Settings, label: 'Settings', action: () => {} },
     { icon: HelpCircle, label: 'Help', action: () => {} },
   ];
 
@@ -59,8 +56,39 @@ export default function TaskBar() {
           {isExpanded ? <X size={24} /> : <Menu size={24} />}
         </button>
 
+        {/* New Chat Button - Special Styling */}
+        <div className={`px-2 mt-4 ${isExpanded ? 'px-4' : ''}`}>
+          <button
+            onClick={() => window.location.reload()}
+            className={`flex items-center transition-all duration-300 hover:shadow-lg ${
+              isExpanded ? 'w-full' : 'w-10 mx-auto'
+            }`}
+            style={{
+              backgroundColor: '#C7A562',
+              borderRadius: isExpanded ? '8px' : '50%',
+              height: '40px',
+              padding: isExpanded ? '0 16px' : '0',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B59552'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A562'}
+            aria-label="New Chat"
+          >
+            <div className="flex items-center justify-center" style={{ minWidth: '40px', height: '40px' }}>
+              <MessageSquare size={20} style={{ color: '#004A84' }} />
+            </div>
+            {isExpanded && (
+              <span 
+                className="ml-2 text-sm font-medium whitespace-nowrap"
+                style={{ color: '#004A84' }}
+              >
+                New Chat
+              </span>
+            )}
+          </button>
+        </div>
+
         {/* Menu Items */}
-        <nav className="mt-4">
+        <nav className="mt-6">
           {menuItems.map((item, index) => (
             <button
               key={index}
