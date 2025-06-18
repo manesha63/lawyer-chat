@@ -641,6 +641,11 @@ psql -U postgres -h localhost
 
 ### Planned Features
 
+
+
+
+
+
 3. **Advanced Search**: Full-text search across chat history
 4. **Export Options**: PDF, Word, plain text exports
 5. **Voice Input**: Speech-to-text for queries

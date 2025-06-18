@@ -66,7 +66,7 @@ export default function Sidebar({
       {/* Sidebar */}
       <div 
         ref={sidebarRef}
-        className={`fixed left-[56px] top-0 h-screen bg-[#f8f9fa] dark:bg-dark-sidebar border-r border-gray-200 dark:border-dark-border flex flex-col z-[998] transition-all duration-300 ease-in-out`}
+        className={`fixed left-[56px] top-0 h-screen bg-white/95 dark:bg-[#1a1b1e] backdrop-blur-sm flex flex-col z-[998] transition-all duration-300 ease-in-out`}
         style={{
           width: isExpanded ? '250px' : '60px',
           transform: isMobile && !isExpanded ? 'translateX(-100%)' : 'translateX(0)',
@@ -76,12 +76,12 @@ export default function Sidebar({
       {/* Top Section */}
       <div className="space-y-4">
         {/* Toggle Button aligned with AI Legal */}
-        <div className="flex items-center h-[73px] px-3 border-b border-gray-200 dark:border-dark-border">
+        <div className="flex items-center h-[73px] px-3">
           <button
             onClick={onToggleExpand}
             className={`w-8 h-8 flex items-center justify-center rounded-md transition-all duration-200 ${
               isDarkMode 
-                ? 'hover:bg-gray-800 active:bg-gray-700' 
+                ? 'hover:bg-[#25262b] active:bg-[#25262b]' 
                 : 'hover:bg-gray-100 active:bg-[#C7A562] focus:bg-[#C7A562]'
             }`}
             aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
@@ -105,8 +105,7 @@ export default function Sidebar({
             <div 
               className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
-                backgroundColor: isDarkMode ? '#343541' : '#C7A562',
-                border: isDarkMode ? '1px solid #ffffff' : 'none'
+                backgroundColor: isDarkMode ? '#25262b' : '#C7A562'
               }}
             >
               <Plus 
@@ -129,7 +128,7 @@ export default function Sidebar({
                 placeholder="Search chats"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-dark-border dark:bg-dark-bg dark:text-dark-text rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                className="w-full pl-10 pr-3 py-2 text-sm dark:bg-[#25262b] dark:text-dark-text rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white"
               />
             </div>
           )}
@@ -161,8 +160,8 @@ export default function Sidebar({
                       onClick={() => onChatSelect(chat.id)}
                       className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 group ${
                         currentChatId === chat.id 
-                          ? 'bg-white dark:bg-gray-800 shadow-sm' 
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                          ? 'bg-white dark:bg-[#25262b] shadow-sm' 
+                          : 'hover:bg-gray-100 dark:hover:bg-[#25262b]'
                       }`}
                     >
                       <p className={`text-sm truncate ${
@@ -204,7 +203,7 @@ export default function Sidebar({
       </div>
 
       {/* Bottom Section - User Account */}
-      <div className="border-t border-gray-200 dark:border-dark-border p-3">
+      <div className="p-3">
         {/* Account Button */}
         <AccountButton isExpanded={isExpanded} session={session} />
       </div>
@@ -239,7 +238,7 @@ function AccountButton({ isExpanded, session }: { isExpanded: boolean; session: 
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className={`w-full flex items-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ${
+        className={`w-full flex items-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#25262b] transition-all duration-200 ${
           isExpanded ? 'gap-3 px-3 py-2' : 'justify-center p-2'
         }`}
         title={!isExpanded ? (session?.user ? session.user.name || 'User' : 'Not signed in') : ''}
@@ -248,9 +247,8 @@ function AccountButton({ isExpanded, session }: { isExpanded: boolean; session: 
           className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
             backgroundColor: isDarkMode 
-              ? '#343541'
-              : '#C7A562',
-            border: isDarkMode ? '1px solid #ffffff' : 'none'
+              ? '#25262b'
+              : '#C7A562'
           }}
         >
           {session?.user ? (
@@ -287,13 +285,11 @@ function AccountButton({ isExpanded, session }: { isExpanded: boolean; session: 
           isExpanded ? 'left-0 right-0' : 'left-0 min-w-[200px]'
         }`}
         style={{
-          backgroundColor: isDarkMode ? '#1f2937' : '#f3f4f6',
-          borderColor: isDarkMode ? '#374151' : '#e5e7eb',
-          border: '1px solid'
+          backgroundColor: isDarkMode ? '#25262b' : '#f3f4f6'
         }}>
           {session?.user ? (
             <>
-              <div className="px-4 py-3" style={{ borderBottom: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}` }}>
+              <div className="px-4 py-3">
                 <p className="text-sm font-medium" style={{ color: isDarkMode ? '#f3f4f6' : '#004A84' }}>{session.user.name || 'User'}</p>
                 <p className="text-xs" style={{ color: isDarkMode ? '#9ca3af' : '#004A84', opacity: 0.8 }}>{session.user.email}</p>
               </div>

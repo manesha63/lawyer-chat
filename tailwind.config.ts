@@ -11,8 +11,8 @@ const config: Config = {
     extend: {
       colors: {
         dark: {
-          bg: '#343541',       // Charcoal / Near Black - Main background
-          sidebar: '#202123',  // Darker Gray-Black - Sidebar background
+          bg: '#1a1b1e',       // Dark background - Main background
+          sidebar: '#25262b',  // Slightly lighter - Sidebar/dropdown background
           text: '#D1D5DB',     // Off-White - Main text
           muted: '#8E8E93',    // Muted Gray - Secondary text
           border: '#2E2E38',   // Dim Gray - Borders/dividers

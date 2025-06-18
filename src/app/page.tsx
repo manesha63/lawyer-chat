@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { Send, User, LogOut, Scale, Wrench } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { Send, Wrench } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import ChatHistorySidebar from '@/components/ChatHistorySidebar';
 import Sidebar from '@/components/Sidebar';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import TaskBar from '@/components/TaskBar';
@@ -20,7 +19,7 @@ interface Message {
 }
 
 export default function LawyerChat() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +28,7 @@ export default function LawyerChat() {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isExpanded, toggleSidebar, isDarkMode } = useSidebarStore();
   
   // Dynamic input sizing based on chat content
@@ -105,23 +105,6 @@ export default function LawyerChat() {
     }
   };
 
-  const deleteChat = async (chatId: string) => {
-    try {
-      const response = await fetch(`/api/chats/${chatId}`, {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        if (currentChatId === chatId) {
-          setCurrentChatId(null);
-          setMessages([]);
-        }
-        await fetchChatHistory();
-      }
-    } catch (error) {
-      console.error('Error deleting chat:', error);
-    }
-  };
 
   const saveMessage = async (role: string, content: string, references: string[] = []) => {
     if (!session?.user || !currentChatId) return;
@@ -303,9 +286,12 @@ export default function LawyerChat() {
 
 
   return (
-    <div className={`flex h-screen ${isDarkMode ? 'bg-[#343541]' : 'bg-gray-50'}`}>
+    <div className="flex h-screen">
       {/* Universal TaskBar - Always visible for all users */}
-      <TaskBar />
+      <TaskBar 
+        onChatSelect={selectChat}
+        onNewChat={createNewChat}
+      />
       
       {/* Sidebar - Only show for logged-in users */}
       {session?.user && (
@@ -322,50 +308,32 @@ export default function LawyerChat() {
       {/* Main Content - Adjust margin for taskbar and sidebar */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ml-[56px] ${session?.user && isExpanded ? 'md:ml-[316px]' : ''}`}>
         {/* Header */}
-        <div className={`${isDarkMode ? 'bg-[#202123] border-gray-700' : 'bg-white border-gray-200'} border-b px-6 py-4`}>
+        <div className={`px-6 py-4 relative z-10`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : ''}`} style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center relative z-50">
               <DarkModeToggle />
-              {status === 'loading' ? (
-                <div className="text-gray-500">Loading...</div>
-              ) : session ? (
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600 hidden sm:block">
-                    {session.user?.name || session.user?.email}
-                  </span>
-                  <button
-                    onClick={() => signOut()}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  >
-                    <LogOut size={16} />
-                    <span className="hidden sm:block">Sign Out</span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => signIn()}
-                  className="px-4 py-2 rounded-lg transition-colors"
-                  style={{ backgroundColor: '#C7A562', color: '#004A84' }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#B59552'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#C7A562'}
-                >
-                  Sign In
-                </button>
-              )}
             </div>
           </div>
         </div>
 
         {/* Messages Window */}
-        <div className={`flex-1 overflow-y-auto px-6 py-4 space-y-6 ${isDarkMode ? 'bg-[#343541]' : ''}`}>
+        <div className="flex-1 overflow-x-hidden py-4 space-y-6 hide-scrollbar relative" style={{
+          overflowY: messages.length === 0 ? 'hidden' : 'auto',
+          paddingLeft: '2.5cm',
+          paddingRight: '2.5cm'
+        }}>
           {/* Welcome Message - Only show when no messages */}
           {messages.length === 0 && (
-            <div className="flex items-start justify-center h-full pt-32">
-              <h2 className="text-6xl font-medium" style={{ color: '#E1C88E' }}>Hi Welcome to AI Legal</h2>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <h2 className="font-medium" style={{ 
+                color: '#E1C88E',
+                fontSize: '2.52rem', // 3.6rem (text-6xl) * 0.7
+                marginBottom: 'calc(125px + 2cm + 3cm)' // Input height (125px) + 2cm gap + 3cm additional
+              }}>Hi Welcome to AI Legal</h2>
             </div>
           )}
           
@@ -374,29 +342,33 @@ export default function LawyerChat() {
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-2xl ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
+              <div className={`${message.sender === 'user' ? 'order-2 max-w-xl' : 'order-1'}`}>
                 {/* Message bubble */}
                 <div
-                  className={`px-4 py-3 rounded-lg shadow-sm ${
+                  className={`${
                     message.sender === 'user'
-                      ? 'text-white'
-                      : isDarkMode ? 'border border-gray-600 text-gray-100' : 'border border-gray-200 text-gray-900'
+                      ? 'px-4 py-3 rounded-lg shadow-sm text-white inline-block'
+                      : isDarkMode ? 'text-gray-100 max-w-2xl' : 'text-gray-900 max-w-2xl'
                   }`}
                   style={
                     message.sender === 'user' 
-                      ? { backgroundColor: isDarkMode ? '#2A5490' : '#226EA7' } 
-                      : { backgroundColor: isDarkMode ? '#B59552' : '#C7A562' }
+                      ? { backgroundColor: isDarkMode ? '#2a2b2f' : '#226EA7' } 
+                      : {}
                   }
                 >
-                  <div className="flex items-start space-x-2">
-                    {message.sender === 'user' && (
-                      <User size={16} className="text-white mt-1 flex-shrink-0 order-2" />
-                    )}
-                    <div className="flex-1">
+                  <div>
+                    <div>
                       {message.sender === 'user' ? (
                         <p className="text-sm leading-relaxed">{message.text}</p>
                       ) : (
                         <div className="text-sm leading-relaxed">
+                          {message.text === '' && isLoading && message.id === messages[messages.length - 1].id ? (
+                            <div className={`loading-dots ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                            </div>
+                          ) : (
                           <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             components={{
@@ -427,12 +399,13 @@ export default function LawyerChat() {
                           >
                             {message.text}
                           </ReactMarkdown>
+                          )}
                         </div>
                       )}
                       
                       {/* Citation Display */}
                       {message.references && message.references.length > 0 && (
-                        <div className={`mt-3 pt-3 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-400'}`}>
+                        <div className={`mt-3 pt-3`}>
                           <h4 className={`text-xs font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>Sources:</h4>
                           <ol className="list-decimal list-inside space-y-1">
                             {message.references.map((ref, index) => (
@@ -466,38 +439,43 @@ export default function LawyerChat() {
         </div>
 
         {/* Input Area */}
-        <div className={`${isDarkMode ? 'bg-[#40414f] border-gray-700' : 'bg-white border-gray-200'} border-t transition-all duration-500 ${
-          hasMessages ? 'px-6 py-4' : 'px-16 py-8'
+        <div className={`transition-all duration-500 ${
+          hasMessages 
+            ? 'px-6 py-4 flex justify-center' 
+            : 'absolute inset-0 flex items-center justify-center'
         }`}>
-          <div className="flex items-center space-x-3">
-            <div className="flex-1 relative">
+          <div className="w-full mx-auto" style={{
+            maxWidth: '57.6rem',
+            paddingLeft: '3cm',
+            paddingRight: '3cm',
+          }}>
+            <div className="relative">
               <textarea
+                ref={textareaRef}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask your legal question..."
-                rows={1}
-                className={`w-full border ${isDarkMode ? 'border-gray-600 bg-[#40414f] text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-500 overflow-hidden ${
-                  hasMessages 
-                    ? 'px-4 py-3 pl-12 text-sm min-h-[44px]' 
-                    : 'px-6 py-5 pl-14 text-lg min-h-[60px]'
-                }`}
+                className={`w-full ${isDarkMode ? 'bg-[#25262b] text-gray-100 placeholder-gray-400' : 'bg-gray-100 text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all duration-500 px-6 py-8 pl-16 pr-24 text-lg min-h-[125px] break-words`}
                 style={{
-                  height: 'auto',
-                  maxHeight: hasMessages ? '120px' : '200px'
+                  height: '125px',
+                  maxHeight: '260px',
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'pre-wrap'
                 }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto';
-                  target.style.height = `${Math.min(target.scrollHeight, hasMessages ? 120 : 200)}px`;
+                  target.style.height = '125px';
+                  target.style.height = `${Math.min(target.scrollHeight, 260)}px`;
                 }}
                 disabled={isLoading}
               />
               
               {/* Tools Button */}
-              <div className={`absolute transition-all duration-500 ${
-                hasMessages ? 'left-3 bottom-3' : 'left-4 bottom-5'
-              }`}>
+              <div className="absolute left-5 bottom-6 transition-all duration-500">
                 <div className="relative">
                   <button
                     onClick={() => setShowToolsDropdown(!showToolsDropdown)}
@@ -505,12 +483,12 @@ export default function LawyerChat() {
                     aria-label="Select tool"
                     title="Select tool"
                   >
-                    <Wrench size={hasMessages ? 16 : 20} />
+                    <Wrench size={24} />
                   </button>
                   
                   {/* Tools Dropdown */}
                   {showToolsDropdown && (
-                    <div className={`absolute bottom-full left-0 mb-2 w-48 ${isDarkMode ? 'bg-[#202123] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-lg py-2 z-10`}>
+                    <div className={`absolute bottom-full left-0 mb-2 w-48 ${isDarkMode ? 'bg-[#25262b]' : 'bg-white'} rounded-lg shadow-lg py-2 z-10`}>
                       <button
                         onClick={() => {
                           setSelectedTool(selectedTool === 'recursive-summary' ? null : 'recursive-summary');
@@ -528,28 +506,39 @@ export default function LawyerChat() {
                   )}
                 </div>
               </div>
+              
+              {/* Send Button - Inside input box */}
+              <button
+                onClick={handleSend}
+                disabled={!inputText.trim() || isLoading}
+                className={`absolute bottom-4 right-4 w-10 h-10 transition-all duration-300 rounded-lg flex items-center justify-center ${
+                  inputText.trim() 
+                    ? 'opacity-100 scale-100' 
+                    : 'opacity-0 scale-0 pointer-events-none'
+                }`}
+                style={{ 
+                  backgroundColor: isDarkMode ? 'transparent' : '#C7A562',
+                  border: isDarkMode ? '2px solid #d1d1d1' : 'none',
+                  color: isDarkMode ? '#d1d1d1' : '#004A84'
+                }}
+                onMouseEnter={(e) => {
+                  const target = e.target as HTMLButtonElement;
+                  if (!target.disabled) {
+                    if (!isDarkMode) target.style.backgroundColor = '#B59552';
+                    else target.style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const target = e.target as HTMLButtonElement;
+                  if (!target.disabled) {
+                    if (isDarkMode) target.style.backgroundColor = 'transparent';
+                    else target.style.backgroundColor = '#C7A562';
+                  }
+                }}
+              >
+                <Send size={20} />
+              </button>
             </div>
-            <button
-              onClick={handleSend}
-              disabled={!inputText.trim() || isLoading}
-              className={`disabled:opacity-50 disabled:cursor-not-allowed rounded-lg flex items-center space-x-2 transition-all duration-500 shadow-sm flex-shrink-0 ${
-                hasMessages 
-                  ? 'px-6 h-[44px]' 
-                  : 'px-6 h-[44px]'
-              }`}
-              style={{ backgroundColor: '#C7A562', color: '#004A84' }}
-              onMouseEnter={(e) => {
-                const target = e.target as HTMLButtonElement;
-                if (!target.disabled) target.style.backgroundColor = '#B59552';
-              }}
-              onMouseLeave={(e) => {
-                const target = e.target as HTMLButtonElement;
-                if (!target.disabled) target.style.backgroundColor = '#C7A562';
-              }}
-            >
-              <Send size={hasMessages ? 16 : 20} />
-              <span className="hidden sm:block">Send</span>
-            </button>
           </div>
         </div>
       </div>

@@ -17,5 +17,5 @@ export default function DarkModeWrapper({ children }: { children: React.ReactNod
     }
   }, [isDarkMode]);
   
-  return <div className={isDarkMode ? 'dark' : ''}>{children}</div>;
+  return <>{children}</>;
 }
