@@ -461,6 +461,8 @@ export default function LawyerChat() {
                   <button
                     onClick={() => setShowToolsDropdown(!showToolsDropdown)}
                     className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                    aria-label="Select tool"
+                    title="Select tool"
                   >
                     <Wrench size={hasMessages ? 16 : 20} />
                   </button>
