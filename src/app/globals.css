@@ -5,6 +5,11 @@
   --foreground: #171717;
 }
 
+.dark {
+  --background: #343541;
+  --foreground: #D1D5DB;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -12,15 +17,192 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Smooth transitions for sidebar */
+* {
+  transition-property: none;
+}
+
+.transition-transform {
+  transition-property: transform;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+}
+
+.transition-all {
+  transition-property: all;
+}
+
+.transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Ensure smooth transitions */
+.transition-margin {
+  transition-property: margin-left;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Scrollbar styles for sidebar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+/* Dark mode custom colors */
+.dark .dark\:bg-dark-bg {
+  background-color: #343541;
+}
+
+.dark .dark\:bg-dark-sidebar {
+  background-color: #202123;
+}
+
+.dark .dark\:text-dark-text {
+  color: #D1D5DB;
+}
+
+.dark .dark\:text-dark-muted {
+  color: #8E8E93;
+}
+
+.dark .dark\:border-dark-border {
+  border-color: #2E2E38;
+}
+
+/* Dark mode button styling */
+.dark button {
+  transition: all 0.2s ease;
+}
+
+.dark .border-gray-500 {
+  border-color: #6b7280;
+}
+
+.dark .border-gray-600 {
+  border-color: #4b5563;
+}
+
+.dark .text-gray-300 {
+  color: #d1d5db;
+}
+
+.dark .text-gray-400 {
+  color: #9ca3af;
+}
+
+/* Dark mode input styling */
+.dark textarea.dark\:bg-dark-bg {
+  background-color: #343541 !important;
+}
+
+.dark textarea:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.dark .dark\:focus\:ring-white:focus {
+  --tw-ring-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Prevent horizontal scrolling and ensure text wrapping */
+* {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.break-words {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Ensure message containers don't overflow */
+.max-w-2xl {
+  max-width: 42rem;
+  width: 100%;
+}
+
+/* Ensure assistant messages are black in light mode only */
+:not(.dark) .text-black {
+  color: #000000 !important;
+}
+
+/* Override any inherited colors for markdown content in light mode only */
+:not(.dark) .text-black * {
+  color: inherit !important;
+}
+
+/* Force white text for assistant messages in dark mode - multiple selectors for higher specificity */
+.dark .dark\:text-white,
+html.dark .dark\:text-white,
+body.dark .dark\:text-white {
+  color: #ffffff !important;
+}
+
+/* Force white text for all children in dark mode */
+.dark .dark\:text-white *,
+html.dark .dark\:text-white *,
+body.dark .dark\:text-white * {
+  color: #ffffff !important;
+}
+
+/* Additional specific selector for assistant messages */
+.dark [class*="text-black"][class*="dark:text-white"] {
+  color: #ffffff !important;
+}
+
+/* Direct class for assistant messages */
+.assistant-message-light {
+  color: #000000 !important;
+}
+
+.assistant-message-dark {
+  color: #ffffff !important;
+}
+
+/* Apply to all child elements */
+.assistant-message-light *,
+.assistant-message-dark * {
+  color: inherit !important;
 }
