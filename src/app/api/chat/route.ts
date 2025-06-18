@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    console.log('Sending to n8n webhook:', webhookUrl);
-    console.log('Payload:', JSON.stringify(payload, null, 2));
+    console.log('🔌 Sending to n8n webhook:', webhookUrl);
+    console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
     // Forward request to n8n webhook
     const response = await fetch(webhookUrl, {
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Handle streaming response if needed
     const contentType = response.headers.get('content-type');
+    console.log('📥 Response content-type:', contentType);
     
     if (contentType?.includes('text/event-stream')) {
       // For streaming responses, pass through the stream
@@ -81,12 +82,14 @@ export async function POST(request: NextRequest) {
     let responseData: any;
     
     // Parse response based on content type
-    if (contentType?.includes('text/html')) {
+    if (contentType?.includes('text/html') || contentType?.includes('text/plain')) {
+      // For text/html or text/plain responses from n8n
       responseData = { response: responseText.trim(), sources: [] };
     } else {
       try {
         responseData = JSON.parse(responseText);
       } catch {
+        // Fallback for any unparseable response
         responseData = { response: responseText.trim(), sources: [] };
       }
     }
