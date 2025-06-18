@@ -82,8 +82,8 @@ function AuthErrorContent() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push('/auth/signin')}
-                className="w-full flex items-center justify-center px-6 py-3 rounded-lg shadow-sm text-white font-medium transition-all duration-200"
-                style={{ backgroundColor: '#C7A562' }}
+                className="w-full flex items-center justify-center px-6 py-3 rounded-lg shadow-sm font-medium transition-all duration-200"
+                style={{ backgroundColor: '#C7A562', color: '#004A84' }}
                 onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#B59552'}
                 onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#C7A562'}
               >
@@ -92,9 +92,16 @@ function AuthErrorContent() {
               
               <button
                 onClick={() => router.push('/')}
-                className="w-full flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-all duration-200"
+                className="w-full flex items-center justify-center px-6 py-3 border rounded-lg font-medium transition-all duration-200"
+                style={{ 
+                  backgroundColor: '#E1C88E', 
+                  color: '#004A84',
+                  borderColor: 'transparent'
+                }}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#D4B67D'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#E1C88E'}
               >
-                <ArrowLeft size={16} className="mr-2" />
+                <ArrowLeft size={16} className="mr-2" style={{ color: '#004A84' }} />
                 Back to Home
               </button>
             </div>
