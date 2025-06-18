@@ -200,20 +200,54 @@ export default function LawyerChat() {
 
         if (reader) {
           let currentText = '';
+          let buffer = '';
+          let sources: string[] = [];
+          
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             
             const chunk = decoder.decode(value);
-            currentText += chunk;
+            buffer += chunk;
             
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.id === assistantId 
-                  ? { ...msg, text: currentText }
-                  : msg
-              )
-            );
+            // Split by newlines and process each line
+            const lines = buffer.split('\n');
+            buffer = lines[lines.length - 1]; // Keep incomplete line in buffer
+            
+            for (let i = 0; i < lines.length - 1; i++) {
+              const line = lines[i].trim();
+              
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  
+                  if (data.type === 'text') {
+                    currentText += data.text;
+                    setMessages(prev => 
+                      prev.map(msg => 
+                        msg.id === assistantId 
+                          ? { ...msg, text: currentText }
+                          : msg
+                      )
+                    );
+                  } else if (data.type === 'sources') {
+                    sources = data.sources || [];
+                    setMessages(prev => 
+                      prev.map(msg => 
+                        msg.id === assistantId 
+                          ? { ...msg, references: sources }
+                          : msg
+                      )
+                    );
+                  } else if (data.type === 'done') {
+                    // Save the complete message
+                    await saveMessage('assistant', currentText, sources);
+                  }
+                } catch (e) {
+                  console.error('Error parsing SSE data:', e);
+                }
+              }
+            }
           }
         }
       } else {
