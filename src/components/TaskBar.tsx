@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Menu, Plus, X, LogOut, User, Search, ChevronRight } from 'lucide-react';
 import { useSidebarStore } from '@/store/sidebar';
-import { useRouter } from 'next/navigation';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -17,8 +16,7 @@ export default function TaskBar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   const { isDarkMode } = useSidebarStore();
-  const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   // Click outside detection
   useEffect(() => {
@@ -171,14 +169,15 @@ export default function TaskBar() {
 
         {/* Bottom Section - User Button */}
         <div className="absolute bottom-4 left-0 right-0">
-          <div className={`flex items-center ${isExpanded ? 'px-4 justify-between' : 'px-2 justify-center'}`}>
-            <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} ${isExpanded ? 'block' : 'hidden'}`}>
+          <div className={`${isExpanded ? 'px-4' : 'px-2'}`}>
+            <div className={`text-xs mb-3 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} ${isExpanded ? 'block' : 'hidden'}`}>
               <div className="font-semibold">AI Legal Assistant</div>
               <div>Version 1.0.0</div>
             </div>
             
             {/* User/Auth Button */}
-            <div className="relative" ref={userMenuRef}>
+            <div className={`flex items-center ${isExpanded ? 'justify-start' : 'justify-center'}`}>
+              <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:shadow-lg"
@@ -192,10 +191,18 @@ export default function TaskBar() {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A562'}
                 aria-label={session ? 'User menu' : 'Sign in'}
               >
-                <span className="text-base font-extrabold" style={{ color: '#004A84' }}>
+                <span className="text-base font-bold" style={{ color: '#004A84', fontStyle: 'normal' }}>
                   {session ? getUserInitials() : '?'}
                 </span>
               </button>
+              {isExpanded && (
+                <span 
+                  className="ml-3 text-sm font-medium whitespace-nowrap transition-opacity duration-300"
+                  style={{ color: '#004A84' }}
+                >
+                  {session ? (session.user?.name || session.user?.email || 'User') : 'Sign In'}
+                </span>
+              )}
 
               {/* Dropdown Menu */}
               {showUserMenu && (
@@ -245,6 +252,7 @@ export default function TaskBar() {
                   )}
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>
