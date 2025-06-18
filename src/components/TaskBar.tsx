@@ -116,7 +116,7 @@ export default function TaskBar() {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A562'}
                 aria-label={session ? 'User menu' : 'Sign in'}
               >
-                <span className="text-sm font-bold" style={{ color: '#004A84' }}>
+                <span className="text-lg font-extrabold" style={{ color: '#004A84' }}>
                   {session ? getUserInitials() : '?'}
                 </span>
               </button>
