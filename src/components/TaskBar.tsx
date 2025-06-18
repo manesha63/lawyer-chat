@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Menu, MessageSquare, Wrench, BookOpen, HelpCircle, X } from 'lucide-react';
+import { Menu, Plus, X } from 'lucide-react';
 import { useSidebarStore } from '@/store/sidebar';
 import { useRouter } from 'next/navigation';
 
@@ -25,11 +25,6 @@ export default function TaskBar() {
     }
   }, [isExpanded]);
 
-  const menuItems = [
-    { icon: Wrench, label: 'Legal Tools', action: () => {} },
-    { icon: BookOpen, label: 'Documentation', action: () => {} },
-    { icon: HelpCircle, label: 'Help', action: () => {} },
-  ];
 
   return (
     <>
@@ -56,60 +51,33 @@ export default function TaskBar() {
           {isExpanded ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* New Chat Button - Special Styling */}
-        <div className={`px-2 mt-4 ${isExpanded ? 'px-4' : ''}`}>
+        {/* New Chat Button - Always Circular */}
+        <div className={`flex items-center mt-4 ${isExpanded ? 'px-4 justify-start' : 'px-2 justify-center'}`}>
           <button
             onClick={() => window.location.reload()}
-            className={`flex items-center transition-all duration-300 hover:shadow-lg ${
-              isExpanded ? 'w-full' : 'w-10 mx-auto'
-            }`}
+            className="flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:shadow-lg"
             style={{
               backgroundColor: '#C7A562',
-              borderRadius: isExpanded ? '8px' : '50%',
+              borderRadius: '50%',
+              width: '40px',
               height: '40px',
-              padding: isExpanded ? '0 16px' : '0',
             }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B59552'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C7A562'}
             aria-label="New Chat"
           >
-            <div className="flex items-center justify-center" style={{ minWidth: '40px', height: '40px' }}>
-              <MessageSquare size={20} style={{ color: '#004A84' }} />
-            </div>
-            {isExpanded && (
-              <span 
-                className="ml-2 text-sm font-medium whitespace-nowrap"
-                style={{ color: '#004A84' }}
-              >
-                New Chat
-              </span>
-            )}
+            <Plus size={20} style={{ color: '#004A84' }} />
           </button>
+          {isExpanded && (
+            <span 
+              className="ml-3 text-sm font-medium whitespace-nowrap transition-opacity duration-300"
+              style={{ color: '#004A84' }}
+            >
+              New Chat
+            </span>
+          )}
         </div>
 
-        {/* Menu Items */}
-        <nav className="mt-6">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={item.action}
-              className={`w-full flex items-center px-4 py-3 transition-colors ${
-                isDarkMode 
-                  ? 'hover:bg-gray-700 text-gray-300 hover:text-white' 
-                  : 'hover:bg-gray-50 text-gray-700 hover:text-gray-900'
-              }`}
-            >
-              <item.icon size={20} className="flex-shrink-0" />
-              <span 
-                className={`ml-3 text-sm font-medium transition-all duration-300 ${
-                  isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'
-                }`}
-              >
-                {item.label}
-              </span>
-            </button>
-          ))}
-        </nav>
 
         {/* Bottom Section - Version Info */}
         <div className={`absolute bottom-4 left-0 right-0 px-4 ${isExpanded ? 'block' : 'hidden'}`}>
