@@ -79,7 +79,7 @@ export default function CitationPanel({ citation, onClose }: CitationPanelProps)
       </div>
 
       {/* Citation Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto hide-scrollbar p-6">
         <div className="space-y-4">
           {/* Citation Title */}
           <h2 className={`text-xl font-bold ${

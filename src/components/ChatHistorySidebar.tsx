@@ -107,11 +107,7 @@ export default function ChatHistorySidebar({
           </div>
 
           {/* Chat List */}
-          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-sm hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
-               style={{
-                 scrollbarWidth: 'thin',
-                 scrollbarColor: '#d1d5db #f3f4f6'
-               }}>
+          <div className="flex-1 overflow-y-auto hide-scrollbar">
             {!isLoggedIn ? (
               <div className="p-4 text-center text-gray-500">
                 <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />

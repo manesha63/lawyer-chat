@@ -143,7 +143,7 @@ export default function Sidebar({
           </div>
         )}
         
-        <div className="flex-1 px-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className="flex-1 px-3 overflow-y-auto hide-scrollbar">
           {isExpanded ? (
             <div className="space-y-2 pb-4">
               {filteredChats.length === 0 ? (

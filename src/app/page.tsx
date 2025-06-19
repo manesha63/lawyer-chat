@@ -31,12 +31,98 @@ export default function LawyerChat() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [showCitationPanel, setShowCitationPanel] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<any>(null);
+  const [windowWidth, setWindowWidth] = useState(1440); // Default value for SSR
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isExpanded, toggleSidebar, isDarkMode, isTaskBarExpanded } = useSidebarStore();
   
   // Dynamic input sizing based on chat content
   const hasMessages = messages.length > 0; // Any messages present
+
+  // Track window resize and set initial width after hydration
+  useEffect(() => {
+    // Set initial width after component mounts (client-side only)
+    setWindowWidth(window.innerWidth);
+    
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Calculate dynamic sizing based on window width and panel states
+  const calculateResponsiveSizing = () => {
+    // Calculate available width
+    const taskBarWidth = isTaskBarExpanded ? 280 : 56;
+    const citationWidth = showCitationPanel ? 400 : 0;
+    const availableWidth = windowWidth - taskBarWidth - citationWidth;
+    
+    // Calculate proportional values based on available space
+    // Base values for full desktop (1920px)
+    const baseWidth = 1920;
+    const baseAvailable = baseWidth - 56; // Base with collapsed taskbar
+    const spaceRatio = availableWidth / baseAvailable;
+    
+    // Proportional padding calculation
+    const baseMsgPadding = 95; // ~2.5cm in pixels
+    const baseInputPadding = 113; // ~3cm in pixels
+    
+    // Scale padding proportionally but with minimum values
+    let messagePadding = Math.max(19, Math.min(baseMsgPadding, baseMsgPadding * spaceRatio)); // Min 0.5cm, max 2.5cm
+    let inputPadding = Math.max(38, Math.min(baseInputPadding, baseInputPadding * spaceRatio)); // Min 1cm, max 3cm
+    
+    // Input box sizing
+    const baseInputHeight = 125;
+    const baseMaxHeight = 260;
+    let inputHeight = Math.max(80, Math.min(baseInputHeight, baseInputHeight * Math.sqrt(spaceRatio))); // Use sqrt for less aggressive scaling
+    let maxInputHeight = Math.max(160, Math.min(baseMaxHeight, baseMaxHeight * Math.sqrt(spaceRatio)));
+    
+    // Font size scaling
+    const baseFontSize = 18; // text-lg is ~18px
+    let fontSize = Math.max(14, Math.min(baseFontSize, baseFontSize * Math.sqrt(spaceRatio)));
+    
+    // Max width calculation
+    let maxWidth = availableWidth > 1200 ? '57.6rem' : availableWidth > 800 ? '48rem' : '100%';
+    
+    // Special handling for very small spaces
+    if (availableWidth < 500) {
+      messagePadding = 19; // 0.5cm
+      inputPadding = 19; // 0.5cm
+      inputHeight = 80;
+      maxInputHeight = 160;
+      fontSize = 14;
+      maxWidth = '100%';
+    }
+    
+    // Calculate dynamic button sizing and positioning
+    const baseButtonSize = 32; // Base button size at full scale
+    const baseIconSize = 24; // Base icon size
+    const buttonSize = Math.max(24, Math.min(baseButtonSize, baseButtonSize * Math.sqrt(spaceRatio)));
+    const iconSize = Math.max(16, Math.min(baseIconSize, baseIconSize * Math.sqrt(spaceRatio)));
+    const sendButtonSize = buttonSize * 1.3; // Send button 1.3x larger
+    const sendIconSize = Math.round(iconSize * 1.3); // Scale icon proportionally
+    const buttonPadding = Math.max(12, 16 * spaceRatio); // Dynamic padding from edges
+    const sendButtonBottom = buttonPadding * 1.5; // Send button slightly higher for visual balance
+    
+    return {
+      messagePadding: `${messagePadding}px`,
+      inputPadding: `${inputPadding}px`,
+      inputHeight: `${inputHeight}px`,
+      maxInputHeight: `${maxInputHeight}px`,
+      fontSize: `${fontSize}px`,
+      maxWidth,
+      buttonSize: `${buttonSize}px`,
+      iconSize: Math.round(iconSize),
+      sendButtonSize: `${sendButtonSize}px`,
+      sendIconSize,
+      buttonPadding: `${buttonPadding}px`,
+      sendButtonBottom: `${sendButtonBottom}px`
+    };
+  };
+
+  const { messagePadding, inputPadding, inputHeight, maxInputHeight, fontSize, maxWidth, buttonSize, iconSize, sendButtonSize, sendIconSize, buttonPadding, sendButtonBottom } = calculateResponsiveSizing();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -343,16 +429,16 @@ export default function LawyerChat() {
         {/* Messages Window */}
         <div className="flex-1 overflow-x-hidden py-4 space-y-6 hide-scrollbar relative" style={{
           overflowY: messages.length === 0 ? 'hidden' : 'auto',
-          paddingLeft: '2.5cm',
-          paddingRight: '2.5cm'
+          paddingLeft: messagePadding,
+          paddingRight: messagePadding
         }}>
           {/* Welcome Message - Only show when no messages */}
           {messages.length === 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <div className="w-full mx-auto" style={{
-                maxWidth: '57.6rem',
-                paddingLeft: '3cm',
-                paddingRight: '3cm',
+                maxWidth: maxWidth,
+                paddingLeft: inputPadding,
+                paddingRight: inputPadding,
               }}>
                 <h2 className="font-medium text-center" style={{ 
                   color: isDarkMode ? '#9CA3AF' : '#E1C88E',
@@ -474,21 +560,24 @@ export default function LawyerChat() {
           right: hasMessages ? 'auto' : '0'
         }}>
           <div className="w-full mx-auto" style={{
-            maxWidth: '57.6rem',
-            paddingLeft: '3cm',
-            paddingRight: '3cm',
+            maxWidth: maxWidth,
+            paddingLeft: inputPadding,
+            paddingRight: inputPadding,
           }}>
             <div className="relative">
               <textarea
                 ref={textareaRef}
+                id="chat-input"
+                name="chatInput"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask your legal question..."
-                className={`w-full ${isDarkMode ? 'bg-[#25262b] text-gray-100 placeholder-gray-400' : 'bg-gray-100 text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all duration-500 px-4 py-6 pl-9 pr-9 text-lg min-h-[125px] break-words`}
+                className={`w-full ${isDarkMode ? 'bg-[#25262b] text-gray-100 placeholder-gray-400' : 'bg-gray-100 text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all duration-500 px-4 py-6 pl-9 pr-9 break-words hide-scrollbar`}
                 style={{
-                  height: '125px',
-                  maxHeight: '260px',
+                  height: inputHeight,
+                  maxHeight: maxInputHeight,
+                  fontSize: fontSize,
                   overflowY: 'auto',
                   overflowX: 'hidden',
                   wordWrap: 'break-word',
@@ -497,22 +586,31 @@ export default function LawyerChat() {
                 }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
-                  target.style.height = '125px';
-                  target.style.height = `${Math.min(target.scrollHeight, 260)}px`;
+                  target.style.height = inputHeight;
+                  const scrollHeight = target.scrollHeight;
+                  const maxHeight = parseInt(maxInputHeight);
+                  target.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
                 }}
                 disabled={isLoading}
               />
               
               {/* Tools Button */}
-              <div className="absolute left-3 bottom-6 transition-all duration-500">
+              <div className="absolute transition-all duration-500" style={{ 
+                left: buttonPadding, 
+                bottom: buttonPadding 
+              }}>
                 <div className="relative">
                   <button
                     onClick={() => setShowToolsDropdown(!showToolsDropdown)}
-                    className={`p-1 ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
+                    className={`flex items-center justify-center ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
                     aria-label="Select tool"
                     title="Select tool"
+                    style={{
+                      width: buttonSize,
+                      height: buttonSize
+                    }}
                   >
-                    <Wrench size={24} />
+                    <Wrench size={iconSize} />
                   </button>
                   
                   {/* Tools Dropdown */}
@@ -540,7 +638,9 @@ export default function LawyerChat() {
               <button
                 onClick={handleSend}
                 disabled={!inputText.trim() || isLoading}
-                className={`absolute bottom-4 right-3 w-8 h-8 transition-all duration-300 rounded-lg flex items-center justify-center ${
+                aria-label="Send message"
+                title="Send message"
+                className={`absolute transition-all duration-300 rounded-lg flex items-center justify-center ${
                   inputText.trim() 
                     ? 'opacity-100 scale-100' 
                     : 'opacity-0 scale-0 pointer-events-none'
@@ -548,7 +648,11 @@ export default function LawyerChat() {
                 style={{ 
                   backgroundColor: isDarkMode ? 'transparent' : '#C7A562',
                   border: isDarkMode ? '2px solid #d1d1d1' : 'none',
-                  color: isDarkMode ? '#d1d1d1' : '#004A84'
+                  color: isDarkMode ? '#d1d1d1' : '#004A84',
+                  right: buttonPadding,
+                  bottom: sendButtonBottom,
+                  width: sendButtonSize,
+                  height: sendButtonSize
                 }}
                 onMouseEnter={(e) => {
                   const target = e.target as HTMLButtonElement;
@@ -565,7 +669,7 @@ export default function LawyerChat() {
                   }
                 }}
               >
-                <Send size={16} />
+                <Send size={sendIconSize} />
               </button>
             </div>
           </div>

@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* Browser compatibility fixes */
+html {
+  -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
+  text-size-adjust: 100%;
+}
+
+* {
+  -webkit-user-select: text; /* Safari */
+  -moz-user-select: text; /* Firefox */
+  -ms-user-select: text; /* IE/Edge */
+  user-select: text;
+}
+
+/* Backdrop filter support */
+.backdrop-blur {
+  -webkit-backdrop-filter: blur(8px); /* Safari */
+  backdrop-filter: blur(8px);
+}
+
 :root {
   --background: #f9fafb; /* Light gray background for light mode */
   --foreground: #171717;
@@ -59,6 +78,7 @@ html {
 .hide-scrollbar {
   overflow-y: auto;
   scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .hide-scrollbar::-webkit-scrollbar {
@@ -68,9 +88,10 @@ html {
 /* Show thin scrollbar on hover if content overflows */
 .hide-scrollbar:hover {
   scrollbar-width: thin; /* Firefox */
-  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent; /* Firefox */
 }
 
+/* Webkit browsers (Chrome, Safari, Edge) */
 .hide-scrollbar:hover::-webkit-scrollbar {
   display: block;
   width: 6px;
@@ -91,7 +112,7 @@ html {
 
 /* Dark mode scrollbar colors */
 .dark .hide-scrollbar:hover {
-  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+  scrollbar-color: rgba(75, 85, 99, 0.5) transparent; /* Firefox */
 }
 
 .dark .hide-scrollbar:hover::-webkit-scrollbar-thumb {
