@@ -9,7 +9,7 @@ Lawyer Chat is a Next.js 15.3.3 web application providing an AI-powered chat int
 - **Database**: PostgreSQL with Prisma ORM
 - **State**: Zustand with persistence
 - **AI Integration**: n8n webhooks → DeepSeek R1 model
-- **UI Libraries**: Lucide icons, React Markdown
+- **UI Libraries**: Lucide icons, React Markdown, date-fns, remark-gfm
 
 ## Architecture
 
@@ -22,19 +22,25 @@ User → Next.js App → API Route → n8n Webhook → DeepSeek AI → Response 
 
 ### Key Directories
 - `src/app/` - Next.js App Router pages and API routes
-- `src/components/` - React components (TaskBar, Sidebar, DarkMode)
-- `src/store/` - Zustand state management
+- `src/components/` - React components (TaskBar, Sidebar, DarkMode, CitationPanel)
+- `src/store/` - Zustand state management (sidebar, dark mode)
+- `src/utils/` - Utilities (mock citations for development)
 - `prisma/` - Database schema and migrations
 
 ## ✅ Implemented Features
 
 ### UI Components
 - **Chat Interface**: Single-page app with welcome screen, streaming responses, markdown support
-- **TaskBar**: Universal sidebar with chat history, new chat button, auth controls
-  - Responsive chat section that adjusts when taskbar expands/collapses
-  - State managed through Zustand for consistent behavior
-- **Dark Mode**: Complete theme switching with persistence via Zustand
-- **Responsive Design**: Mobile-first with collapsible sidebars and overlays
+- **TaskBar**: Universal navigation (always visible for all users)
+  - Chat history with time grouping (Today, Yesterday, This Week)
+  - Search functionality for chat history
+  - Expandable: 56px collapsed → 280px expanded
+  - Progressive enhancement: basic for guests, full for authenticated users
+- **Responsive Design**: Sophisticated dynamic sizing system
+  - Proportional scaling based on window width and panel states
+  - Input auto-sizing with dynamic height adjustment
+  - Button and icon scaling with minimum thresholds
+- **Dark Mode**: Complete theme switching with CSS custom properties
 - **Professional Theme**: Legal colors (#004A84 blue, #C7A562 gold)
 
 ### Backend Integration
@@ -46,9 +52,11 @@ User → Next.js App → API Route → n8n Webhook → DeepSeek AI → Response 
 ### User Experience
 - **Guest Mode**: Full chat functionality without login
 - **Auth Features**: Chat history, clickable citations for logged-in users
-- **Real-time Updates**: Streaming responses with typing animation
+- **Real-time Updates**: Streaming responses with bouncing dots loading animation
 - **Search**: Chat history search functionality
-- **Tools**: Recursive Summary tool dropdown
+- **Tools**: Recursive Summary tool dropdown with visual selection
+- **Message Layout**: 0.8x padding for responses, aligned right edges at 14.144px
+- **Citation Button**: Positioned 0.8cm right from response end
 
 ## n8n Workflow Integration
 
@@ -145,8 +153,10 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/c188c31c-1c45-4118-9ece-5b6057ab51
 - Single-page app with chat as homepage
 - JWT sessions (temporary - migrate to database)
 - Zustand for persistent UI state
-- Character streaming with 30ms delay
+- Character streaming with 30ms delay (2 chars per chunk)
 - Guest mode with progressive enhancement
+- Dynamic responsive sizing engine (calculateResponsiveSizing function)
+- Mock citation system for development (3 detailed legal cases)
 
 ### Security
 - OAuth-only authentication
@@ -202,9 +212,25 @@ Citations provide legal document sources for AI responses, displayed as numbered
 - **Messages**: Blue bubbles for user, gold for assistant
 - **Interactive Hover**: Darker shade variations (~10-15% darker)
 
+## Responsive Design System
+
+### Dynamic Sizing Engine
+Located in `src/app/page.tsx` (calculateResponsiveSizing function):
+- **Proportional scaling** based on TaskBar width (280px expanded, 56px collapsed)
+- **Citation panel integration** (400px width when open)
+- **Minimum thresholds** for readability (320px min assistant width, 14px min font)
+- **Input area scaling** with sqrt ratios for less aggressive scaling
+- **Button/icon scaling** with proportional sizing
+
+### Key Calculations
+- **Message padding**: Proportional with 19px minimum (0.5cm)
+- **Input padding**: Proportional with 38px minimum (1cm)
+- **Assistant width**: 1.3x larger than base (672px), responsive to available space
+- **Font sizes**: 14-18px range with dynamic scaling
+
 ## Account Button
 
-The account button is located at the bottom of the sidebar and handles authentication:
+The account button is located at the bottom of the TaskBar and handles authentication:
 - **Guest Mode**: Shows "?" icon with "Guest/Not signed in" text
 - **Signed In**: Shows user avatar/initial with name and "Signed in" status
 - **Click Action**: Opens dropdown menu above button
@@ -214,6 +240,28 @@ The account button is located at the bottom of the sidebar and handles authentic
 - **Authentication**: Handled via NextAuth.js with Google OAuth
 - **Benefits**: Signed-in users get chat history and clickable citations
 
+## Implementation Status
+
+### ✅ Production Ready
+- Complete responsive design system with dynamic calculations
+- Universal TaskBar with time-grouped chat history
+- Advanced dark mode with CSS custom properties  
+- Message layout with precise spacing (12.48px/14.144px padding)
+- Citation system with mock data for development
+- Streaming responses with 30ms character delay
+- Guest mode with progressive enhancement
+
+### ⚠️ Development Features
+- **Mock Citations**: 3 detailed legal cases in `src/utils/mockCitations.ts`
+- **Test Scripts**: `test-api.js` and `test-webhook.js` for API testing
+- **JWT Sessions**: Temporary solution, migrate to database sessions
+
+### 🔧 Key Files
+- `src/app/page.tsx` - Main chat interface (700+ lines)
+- `src/components/TaskBar.tsx` - Universal navigation system
+- `src/app/globals.css` - Dark mode CSS custom properties
+- `src/store/sidebar.ts` - Zustand state management
+
 ## Troubleshooting
 
 ### Common Issues
@@ -221,10 +269,12 @@ The account button is located at the bottom of the sidebar and handles authentic
 2. **Auth failing**: Verify NEXTAUTH_SECRET and Google OAuth credentials
 3. **Database errors**: Ensure PostgreSQL is running and migrations applied
 4. **Chat not streaming**: Verify webhook URL in .env.local
+5. **Layout issues**: Check responsive calculations in calculateResponsiveSizing function
 
 ### Production Checklist
 - [ ] Real OAuth credentials
-- [ ] Database migrations
+- [ ] Database migrations  
+- [ ] Replace mock citations with real Haystack integration
 - [ ] HTTPS enabled
 - [ ] Rate limiting configured
 - [ ] Error monitoring setup
