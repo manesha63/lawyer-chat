@@ -284,3 +284,52 @@ body.dark .dark\:text-white * {
     opacity: 1;
   }
 }
+
+/* Improved list formatting for markdown content */
+.markdown-list ol {
+  counter-reset: list-counter;
+  list-style: none;
+  padding-left: 0;
+}
+
+.markdown-list ol > li {
+  counter-increment: list-counter;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.75em;
+}
+
+.markdown-list ol > li::before {
+  content: counter(list-counter) ".";
+  font-weight: 600;
+  margin-right: 0.5em;
+  flex-shrink: 0;
+  min-width: 1.5em;
+}
+
+.markdown-list ul > li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.75em;
+}
+
+.markdown-list ul > li::before {
+  content: "•";
+  font-weight: bold;
+  margin-right: 0.5em;
+  flex-shrink: 0;
+}
+
+/* Nested list indentation */
+.markdown-list li > ul,
+.markdown-list li > ol {
+  margin-top: 0.5em;
+  margin-left: 1.5em;
+  width: 100%;
+}
+
+/* Ensure proper text wrapping */
+.markdown-list li > *:not(ul):not(ol) {
+  flex: 1;
+  min-width: 0;
+}

@@ -3,6 +3,8 @@
 import { getProviders, signIn, getSession } from 'next-auth/react';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSidebarStore } from '@/store/sidebar';
+import DarkModeWrapper from '@/components/DarkModeWrapper';
 
 interface Provider {
   id: string;
@@ -21,6 +23,7 @@ function SignInContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const error = searchParams.get('error');
+  const { isDarkMode } = useSidebarStore();
 
   useEffect(() => {
     const setUpProviders = async () => {
@@ -91,20 +94,28 @@ function SignInContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Logo and Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold" style={{ color: '#004A84' }}>AI Legal</h1>
-        </div>
+    <>
+      <DarkModeWrapper />
+      <div className={`min-h-screen ${isDarkMode ? 'bg-[#1a1b1e]' : 'bg-gray-50'} flex items-center justify-center p-4`}>
+        <div className="max-w-lg w-full">
+          {/* Logo and Header */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold" style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
+          </div>
 
-        {/* Sign In Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8">
+          {/* Sign In Card */}
+          <div className={`${isDarkMode ? 'bg-[#25262b] border-gray-700' : 'bg-white border-gray-200'} rounded-lg border p-10`}>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm text-center">
+            <div className={`mb-6 p-4 rounded-lg ${
+              isDarkMode 
+                ? 'bg-red-900/20 border border-red-800' 
+                : 'bg-red-50 border border-red-200'
+            }`}>
+              <p className={`text-sm text-center ${
+                isDarkMode ? 'text-red-400' : 'text-red-600'
+              }`}>
                 {getErrorMessage(error)}
               </p>
             </div>
@@ -119,7 +130,11 @@ function SignInContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-600"
+                className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-[#1a1b1e] border border-gray-600 text-gray-100 placeholder-gray-400' 
+                    : 'border border-gray-300 text-gray-900 placeholder-gray-600'
+                }`}
                 disabled={isLoading}
               />
             </div>
@@ -130,7 +145,11 @@ function SignInContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-600"
+                className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-[#1a1b1e] border border-gray-600 text-gray-100 placeholder-gray-400' 
+                    : 'border border-gray-300 text-gray-900 placeholder-gray-600'
+                }`}
                 disabled={isLoading}
               />
             </div>
@@ -140,17 +159,20 @@ function SignInContent() {
                 disabled={isLoading}
                 className="px-8 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                 style={{
-                  backgroundColor: '#C7A562',
-                  color: '#004A84'
+                  backgroundColor: isDarkMode ? 'transparent' : '#C7A562',
+                  border: isDarkMode ? '2px solid #d1d1d1' : 'none',
+                  color: isDarkMode ? '#d1d1d1' : '#004A84'
                 }}
                 onMouseEnter={(e) => {
                   if (!isLoading) {
-                    (e.target as HTMLButtonElement).style.backgroundColor = '#B59552';
+                    if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#B59552';
+                    else (e.target as HTMLButtonElement).style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isLoading) {
-                    (e.target as HTMLButtonElement).style.backgroundColor = '#C7A562';
+                    if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#C7A562';
+                    else (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
                   }
                 }}
               >
@@ -161,9 +183,9 @@ function SignInContent() {
 
           {/* Divider */}
           <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="px-4 text-sm text-gray-500">or</span>
-            <div className="flex-1 border-t border-gray-300"></div>
+            <div className={`flex-1 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}></div>
+            <span className={`px-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>or</span>
+            <div className={`flex-1 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}></div>
           </div>
 
           {/* Google Sign In */}
@@ -176,17 +198,20 @@ function SignInContent() {
                   disabled={isLoading}
                   className="w-full flex items-center justify-center px-6 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    backgroundColor: '#C7A562',
-                    color: '#004A84'
+                    backgroundColor: isDarkMode ? 'transparent' : '#C7A562',
+                    border: isDarkMode ? '2px solid #d1d1d1' : 'none',
+                    color: isDarkMode ? '#d1d1d1' : '#004A84'
                   }}
                   onMouseEnter={(e) => {
                     if (!isLoading) {
-                      (e.target as HTMLButtonElement).style.backgroundColor = '#B59552';
+                      if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#B59552';
+                      else (e.target as HTMLButtonElement).style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isLoading) {
-                      (e.target as HTMLButtonElement).style.backgroundColor = '#C7A562';
+                      if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#C7A562';
+                      else (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
                     }
                   }}
                 >
@@ -213,19 +238,22 @@ function SignInContent() {
           </div>
 
           {/* Guest Access */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className={`mt-6 pt-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
             <button
               onClick={() => router.push(callbackUrl)}
               className="w-full px-6 py-3 rounded-lg transition-colors text-sm font-medium"
               style={{
-                backgroundColor: '#E1C88E',
-                color: '#004A84'
+                backgroundColor: isDarkMode ? 'transparent' : '#E1C88E',
+                border: isDarkMode ? '2px solid #9CA3AF' : 'none',
+                color: isDarkMode ? '#9CA3AF' : '#004A84'
               }}
               onMouseEnter={(e) => {
-                (e.target as HTMLButtonElement).style.backgroundColor = '#D4B67D';
+                if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#D4B67D';
+                else (e.target as HTMLButtonElement).style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLButtonElement).style.backgroundColor = '#E1C88E';
+                if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#E1C88E';
+                else (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
               }}
             >
               Continue without signing in
@@ -235,17 +263,23 @@ function SignInContent() {
 
       </div>
     </div>
+    </>
   );
 }
 
 export default function SignIn() {
+  const { isDarkMode } = useSidebarStore();
+  
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    }>
-      <SignInContent />
-    </Suspense>
+    <>
+      <DarkModeWrapper />
+      <Suspense fallback={
+        <div className={`min-h-screen ${isDarkMode ? 'bg-[#1a1b1e]' : 'bg-gray-50'} flex items-center justify-center`}>
+          <div className={`w-8 h-8 border-2 ${isDarkMode ? 'border-gray-400' : 'border-blue-600'} border-t-transparent rounded-full animate-spin`}></div>
+        </div>
+      }>
+        <SignInContent />
+      </Suspense>
+    </>
   );
 }

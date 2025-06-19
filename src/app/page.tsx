@@ -8,7 +8,9 @@ import remarkGfm from 'remark-gfm';
 import Sidebar from '@/components/Sidebar';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import TaskBar from '@/components/TaskBar';
+import CitationPanel from '@/components/CitationPanel';
 import { useSidebarStore } from '@/store/sidebar';
+import { getRandomMockCitation } from '@/utils/mockCitations';
 
 interface Message {
   id: number;
@@ -27,9 +29,11 @@ export default function LawyerChat() {
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [showCitationPanel, setShowCitationPanel] = useState(false);
+  const [selectedCitation, setSelectedCitation] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isExpanded, toggleSidebar, isDarkMode } = useSidebarStore();
+  const { isExpanded, toggleSidebar, isDarkMode, isTaskBarExpanded } = useSidebarStore();
   
   // Dynamic input sizing based on chat content
   const hasMessages = messages.length > 0; // Any messages present
@@ -284,6 +288,18 @@ export default function LawyerChat() {
     }
   };
 
+  const handleCitationClick = (messageId: number) => {
+    // Get a mock citation for now
+    const mockCitation = getRandomMockCitation();
+    setSelectedCitation(mockCitation);
+    setShowCitationPanel(true);
+  };
+
+  const closeCitationPanel = () => {
+    setShowCitationPanel(false);
+    setSelectedCitation(null);
+  };
+
 
   return (
     <div className="flex h-screen">
@@ -305,13 +321,17 @@ export default function LawyerChat() {
         />
       )}
 
-      {/* Main Content - Adjust margin for taskbar and sidebar */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ml-[56px] ${session?.user && isExpanded ? 'md:ml-[316px]' : ''}`}>
+      {/* Main Content Container - Adjust margin for taskbar and sidebar */}
+      <div className={`flex-1 flex transition-all duration-300 ${isTaskBarExpanded ? 'ml-[280px]' : 'ml-[56px]'} ${session?.user && isExpanded ? 'md:ml-[316px]' : ''}`}>
+        {/* Chat Section */}
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${showCitationPanel ? 'w-1/2' : 'w-full'}`}>
         {/* Header */}
         <div className={`px-6 py-4 relative z-10`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : ''}`} style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
+              {!isTaskBarExpanded && (
+                <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : ''}`} style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
+              )}
             </div>
             
             <div className="flex items-center relative z-50">
@@ -329,11 +349,17 @@ export default function LawyerChat() {
           {/* Welcome Message - Only show when no messages */}
           {messages.length === 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <h2 className="font-medium" style={{ 
-                color: '#E1C88E',
-                fontSize: '2.52rem', // 3.6rem (text-6xl) * 0.7
-                marginBottom: 'calc(125px + 2cm + 3cm)' // Input height (125px) + 2cm gap + 3cm additional
-              }}>Hi Welcome to AI Legal</h2>
+              <div className="w-full mx-auto" style={{
+                maxWidth: '57.6rem',
+                paddingLeft: '3cm',
+                paddingRight: '3cm',
+              }}>
+                <h2 className="font-medium text-center" style={{ 
+                  color: isDarkMode ? '#9CA3AF' : '#E1C88E',
+                  fontSize: '2.52rem', // 3.6rem (text-6xl) * 0.7
+                  marginBottom: 'calc(125px + 2cm + 3cm)' // Input height (125px) + 2cm gap + 3cm additional
+                }}>Hi Welcome to AI Legal</h2>
+              </div>
             </div>
           )}
           
@@ -361,7 +387,7 @@ export default function LawyerChat() {
                       {message.sender === 'user' ? (
                         <p className="text-sm leading-relaxed">{message.text}</p>
                       ) : (
-                        <div className="text-sm leading-relaxed">
+                        <div className="text-sm leading-relaxed markdown-list">
                           {message.text === '' && isLoading && message.id === messages[messages.length - 1].id ? (
                             <div className={`loading-dots ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                               <span></span>
@@ -376,9 +402,13 @@ export default function LawyerChat() {
                             h2: ({children}) => <h2 className={`text-lg font-semibold mb-2 mt-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{children}</h2>,
                             h3: ({children}) => <h3 className={`text-base font-semibold mb-2 mt-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</h3>,
                             p: ({children}) => <p className={`mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</p>,
-                            ul: ({children}) => <ul className={`list-disc list-inside mb-2 space-y-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</ul>,
-                            ol: ({children}) => <ol className={`list-decimal list-inside mb-2 space-y-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</ol>,
-                            li: ({children}) => <li className="ml-2">{children}</li>,
+                            ul: ({children}) => <ul className={`list-disc ml-6 mb-3 space-y-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</ul>,
+                            ol: ({children}) => <ol className={`list-decimal ml-6 mb-3 space-y-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{children}</ol>,
+                            li: ({children}) => (
+                              <li className="leading-relaxed">
+                                <span className="inline-block ml-2">{children}</span>
+                              </li>
+                            ),
                             strong: ({children}) => <strong className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{children}</strong>,
                             em: ({children}) => <em className="italic">{children}</em>,
                             code: ({children}) => <code className={`px-1 py-0.5 rounded text-sm font-mono ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>{children}</code>,
@@ -403,28 +433,24 @@ export default function LawyerChat() {
                         </div>
                       )}
                       
-                      {/* Citation Display */}
-                      {message.references && message.references.length > 0 && (
-                        <div className={`mt-3 pt-3`}>
-                          <h4 className={`text-xs font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>Sources:</h4>
-                          <ol className="list-decimal list-inside space-y-1">
-                            {message.references.map((ref, index) => (
-                              <li key={index} className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
-                                {session ? (
-                                  <a 
-                                    href={ref} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className={`underline ml-1 transition-colors font-medium ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-800 hover:text-blue-900'}`}
-                                  >
-                                    {ref}
-                                  </a>
-                                ) : (
-                                  <span className={`ml-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>{ref}</span>
-                                )}
-                              </li>
-                            ))}
-                          </ol>
+                      {/* Citation Link - Show only after response is complete */}
+                      {message.sender === 'assistant' && message.text && !(isLoading && message.id === messages[messages.length - 1].id) && (
+                        <div className={`mt-3 inline-block`}>
+                          <button
+                            onClick={() => handleCitationClick(message.id)}
+                            className={`px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
+                              isDarkMode 
+                                ? 'bg-[#25262b] text-[#d1d1d1] border border-[#d1d1d1] hover:bg-[rgba(209,209,209,0.1)] active:bg-[rgba(209,209,209,0.2)]' 
+                                : 'bg-[#C7A562] text-[#004A84] hover:bg-[#B59552] active:bg-[#A08442]'
+                            }`}
+                            style={{
+                              fontSize: '1.092rem', // 1.3x of text-sm (0.875rem × 1.3 = 1.1375rem)
+                              fontWeight: '600',
+                              letterSpacing: '0.05em'
+                            }}
+                          >
+                            CITATIONS
+                          </button>
                         </div>
                       )}
                     </div>
@@ -443,7 +469,10 @@ export default function LawyerChat() {
           hasMessages 
             ? 'px-6 py-4 flex justify-center' 
             : 'absolute inset-0 flex items-center justify-center'
-        }`}>
+        }`} style={{
+          left: hasMessages ? 'auto' : isTaskBarExpanded ? '280px' : '56px',
+          right: hasMessages ? 'auto' : '0'
+        }}>
           <div className="w-full mx-auto" style={{
             maxWidth: '57.6rem',
             paddingLeft: '3cm',
@@ -456,7 +485,7 @@ export default function LawyerChat() {
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask your legal question..."
-                className={`w-full ${isDarkMode ? 'bg-[#25262b] text-gray-100 placeholder-gray-400' : 'bg-gray-100 text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all duration-500 px-6 py-8 pl-16 pr-24 text-lg min-h-[125px] break-words`}
+                className={`w-full ${isDarkMode ? 'bg-[#25262b] text-gray-100 placeholder-gray-400' : 'bg-gray-100 text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all duration-500 px-4 py-6 pl-9 pr-9 text-lg min-h-[125px] break-words`}
                 style={{
                   height: '125px',
                   maxHeight: '260px',
@@ -475,7 +504,7 @@ export default function LawyerChat() {
               />
               
               {/* Tools Button */}
-              <div className="absolute left-5 bottom-6 transition-all duration-500">
+              <div className="absolute left-3 bottom-6 transition-all duration-500">
                 <div className="relative">
                   <button
                     onClick={() => setShowToolsDropdown(!showToolsDropdown)}
@@ -511,7 +540,7 @@ export default function LawyerChat() {
               <button
                 onClick={handleSend}
                 disabled={!inputText.trim() || isLoading}
-                className={`absolute bottom-4 right-4 w-10 h-10 transition-all duration-300 rounded-lg flex items-center justify-center ${
+                className={`absolute bottom-4 right-3 w-8 h-8 transition-all duration-300 rounded-lg flex items-center justify-center ${
                   inputText.trim() 
                     ? 'opacity-100 scale-100' 
                     : 'opacity-0 scale-0 pointer-events-none'
@@ -536,11 +565,22 @@ export default function LawyerChat() {
                   }
                 }}
               >
-                <Send size={20} />
+                <Send size={16} />
               </button>
             </div>
           </div>
         </div>
+        </div>
+        
+        {/* Citation Panel */}
+        {showCitationPanel && selectedCitation && (
+          <div className="flex-1 h-full">
+            <CitationPanel
+              citation={selectedCitation}
+              onClose={closeCitationPanel}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

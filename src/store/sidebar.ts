@@ -8,6 +8,9 @@ interface SidebarStore {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   setDarkMode: (darkMode: boolean) => void;
+  isTaskBarExpanded: boolean;
+  toggleTaskBar: () => void;
+  setTaskBarExpanded: (expanded: boolean) => void;
 }
 
 export const useSidebarStore = create<SidebarStore>()(
@@ -19,6 +22,9 @@ export const useSidebarStore = create<SidebarStore>()(
       isDarkMode: false,
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       setDarkMode: (darkMode: boolean) => set({ isDarkMode: darkMode }),
+      isTaskBarExpanded: false,
+      toggleTaskBar: () => set((state) => ({ isTaskBarExpanded: !state.isTaskBarExpanded })),
+      setTaskBarExpanded: (expanded: boolean) => set({ isTaskBarExpanded: expanded }),
     }),
     {
       name: 'sidebar-storage',
