@@ -83,8 +83,16 @@ export default function LawyerChat() {
     const baseFontSize = 18; // text-lg is ~18px
     let fontSize = Math.max(14, Math.min(baseFontSize, baseFontSize * Math.sqrt(spaceRatio)));
     
-    // Max width calculation
+    // Max width calculation for input area
     let maxWidth = availableWidth > 1200 ? '57.6rem' : availableWidth > 800 ? '48rem' : '100%';
+    
+    // Assistant message width calculation (1.3x larger, responsive)
+    const baseAssistantWidth = 672; // 42rem in pixels (max-w-2xl)
+    const assistantWidth = baseAssistantWidth * 1.3; // 1.3x larger
+    let responsiveAssistantWidth = Math.min(assistantWidth, availableWidth - 80); // Leave 40px margin on each side
+    
+    // Ensure minimum width for readability
+    responsiveAssistantWidth = Math.max(320, responsiveAssistantWidth);
     
     // Special handling for very small spaces
     if (availableWidth < 500) {
@@ -113,6 +121,7 @@ export default function LawyerChat() {
       maxInputHeight: `${maxInputHeight}px`,
       fontSize: `${fontSize}px`,
       maxWidth,
+      assistantWidth: `${responsiveAssistantWidth}px`,
       buttonSize: `${buttonSize}px`,
       iconSize: Math.round(iconSize),
       sendButtonSize: `${sendButtonSize}px`,
@@ -122,7 +131,7 @@ export default function LawyerChat() {
     };
   };
 
-  const { messagePadding, inputPadding, inputHeight, maxInputHeight, fontSize, maxWidth, buttonSize, iconSize, sendButtonSize, sendIconSize, buttonPadding, sendButtonBottom } = calculateResponsiveSizing();
+  const { messagePadding, inputPadding, inputHeight, maxInputHeight, fontSize, maxWidth, assistantWidth, buttonSize, iconSize, sendButtonSize, sendIconSize, buttonPadding, sendButtonBottom } = calculateResponsiveSizing();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -374,7 +383,7 @@ export default function LawyerChat() {
     }
   };
 
-  const handleCitationClick = (messageId: number) => {
+  const handleCitationClick = () => {
     // Get a mock citation for now
     const mockCitation = getRandomMockCitation();
     setSelectedCitation(mockCitation);
@@ -452,28 +461,36 @@ export default function LawyerChat() {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-center'}`}
             >
-              <div className={`${message.sender === 'user' ? 'order-2 max-w-xl' : 'order-1'}`}>
+              <div className={`${message.sender === 'user' ? 'order-2 max-w-xl' : 'order-1'}`} style={{
+                width: message.sender === 'assistant' ? assistantWidth : undefined, // Responsive width for consistent centering
+                marginRight: message.sender === 'user' ? '14.144px' : '0' // Only user messages need extra right margin for alignment
+              }}>
                 {/* Message bubble */}
                 <div
                   className={`${
                     message.sender === 'user'
-                      ? 'px-4 py-3 rounded-lg shadow-sm text-white inline-block'
-                      : isDarkMode ? 'text-gray-100 max-w-2xl' : 'text-gray-900 max-w-2xl'
+                      ? 'rounded-lg shadow-sm text-white inline-block'
+                      : isDarkMode ? 'text-gray-100' : 'text-gray-900'
                   }`}
-                  style={
-                    message.sender === 'user' 
-                      ? { backgroundColor: isDarkMode ? '#2a2b2f' : '#226EA7' } 
-                      : {}
-                  }
+                  style={{
+                    padding: message.sender === 'user' 
+                      ? '15.6px 20.8px' // py-3 px-4 * 1.3 = 12px*1.3=15.6px, 16px*1.3=20.8px
+                      : '0',
+                    backgroundColor: message.sender === 'user' 
+                      ? (isDarkMode ? '#2a2b2f' : '#226EA7')
+                      : undefined
+                  }}
                 >
                   <div>
                     <div>
                       {message.sender === 'user' ? (
                         <p className="text-sm leading-relaxed">{message.text}</p>
                       ) : (
-                        <div className="text-sm leading-relaxed markdown-list">
+                        <div className="text-sm leading-relaxed markdown-list" style={{
+                          padding: '12.48px 14.144px' // Reduced padding to 0.8x of original (15.6px * 0.8 = 12.48px, 17.68px * 0.8 = 14.144px)
+                        }}>
                           {message.text === '' && isLoading && message.id === messages[messages.length - 1].id ? (
                             <div className={`loading-dots ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                               <span></span>
@@ -521,9 +538,9 @@ export default function LawyerChat() {
                       
                       {/* Citation Link - Show only after response is complete */}
                       {message.sender === 'assistant' && message.text && !(isLoading && message.id === messages[messages.length - 1].id) && (
-                        <div className={`mt-3 inline-block`}>
+                        <div className={`mt-3 inline-block`} style={{ marginLeft: '30.24px' }}>
                           <button
-                            onClick={() => handleCitationClick(message.id)}
+                            onClick={() => handleCitationClick()}
                             className={`px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
                               isDarkMode 
                                 ? 'bg-[#25262b] text-[#d1d1d1] border border-[#d1d1d1] hover:bg-[rgba(209,209,209,0.1)] active:bg-[rgba(209,209,209,0.2)]' 
