@@ -115,7 +115,7 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
               onClick={() => toggleTaskBar()}
               className={`p-2 flex items-center justify-center transition-all duration-300 rounded-lg ${
                 isDarkMode 
-                  ? 'hover:bg-gray-700' 
+                  ? 'hover:bg-[#404147]' 
                   : 'hover:bg-gray-100'
               }`}
               style={{ color: isDarkMode ? '#d1d1d1' : '#004A84' }}
@@ -144,14 +144,14 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
             className="flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:shadow-lg"
             style={{
               backgroundColor: isDarkMode ? 'transparent' : '#C7A562',
-              border: isDarkMode ? '2px solid #d1d1d1' : 'none',
+              border: isDarkMode ? '2px solid #d1d1d1' : '2px solid #004A84',
               borderRadius: '50%',
               width: '32px',
               height: '32px',
             }}
             onMouseEnter={(e) => {
               if (!isDarkMode) e.currentTarget.style.backgroundColor = '#B59552';
-              else e.currentTarget.style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
+              else e.currentTarget.style.backgroundColor = '#404147';
             }}
             onMouseLeave={(e) => {
               if (!isDarkMode) e.currentTarget.style.backgroundColor = '#C7A562';
@@ -182,14 +182,14 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
               className="flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:shadow-lg relative"
               style={{
                 backgroundColor: isDarkMode ? 'transparent' : '#C7A562',
-                border: isDarkMode ? '2px solid #d1d1d1' : 'none',
+                border: isDarkMode ? '2px solid #d1d1d1' : '2px solid #004A84',
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',
               }}
               onMouseEnter={(e) => {
                 if (!isDarkMode) e.currentTarget.style.backgroundColor = '#B59552';
-                else e.currentTarget.style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
+                else e.currentTarget.style.backgroundColor = '#404147';
               }}
               onMouseLeave={(e) => {
                 if (!isDarkMode) e.currentTarget.style.backgroundColor = '#C7A562';
@@ -242,10 +242,10 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
                   placeholder="Search chats..."
                   value={chatSearchQuery}
                   onChange={(e) => setChatSearchQuery(e.target.value)}
-                  className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg focus:outline-none ${
                     isDarkMode 
                       ? 'bg-[#25262b] text-gray-100 placeholder-gray-400' 
-                      : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+                      : 'bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500'
                   }`}
                 />
               </div>
@@ -376,14 +376,14 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
                   className="flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:shadow-lg"
                   style={{
                     backgroundColor: isDarkMode ? 'transparent' : '#C7A562',
-                    border: isDarkMode ? '2px solid #ffffff' : 'none',
+                    border: isDarkMode ? '2px solid #ffffff' : '2px solid #004A84',
                     borderRadius: '50%',
                     width: '32px',
                     height: '32px',
                   }}
                   onMouseEnter={(e) => {
                     if (!isDarkMode) e.currentTarget.style.backgroundColor = '#B59552';
-                    else e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                    else e.currentTarget.style.backgroundColor = '#404147';
                   }}
                   onMouseLeave={(e) => {
                     if (!isDarkMode) e.currentTarget.style.backgroundColor = '#C7A562';

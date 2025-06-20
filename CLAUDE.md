@@ -27,36 +27,66 @@ User → Next.js App → API Route → n8n Webhook → DeepSeek AI → Response 
 - `src/utils/` - Utilities (mock citations for development)
 - `prisma/` - Database schema and migrations
 
-## ✅ Implemented Features
+## ✅ Completed Features
 
-### UI Components
-- **Chat Interface**: Single-page app with welcome screen, streaming responses, markdown support
-- **TaskBar**: Universal navigation (always visible for all users)
-  - Chat history with time grouping (Today, Yesterday, This Week)
-  - Search functionality for chat history
-  - Expandable: 56px collapsed → 280px expanded
-  - Progressive enhancement: basic for guests, full for authenticated users
-- **Responsive Design**: Sophisticated dynamic sizing system
-  - Proportional scaling based on window width and panel states
-  - Input auto-sizing with dynamic height adjustment
-  - Button and icon scaling with minimum thresholds
-- **Dark Mode**: Complete theme switching with CSS custom properties
+### Frontend (90% Complete)
+- **Chat Interface**: Streaming responses, markdown support, welcome screen
+- **TaskBar**: Universal navigation with chat history, search, time grouping
+- **Responsive Design**: Dynamic sizing system with proportional scaling
+- **Dark Mode**: Complete theme implementation with CSS variables
 - **Professional Theme**: Legal colors (#004A84 blue, #C7A562 gold)
+- **Guest Mode**: Full functionality without authentication
+- **Tools UI**: Multi-select dropdown with Page Turn & Analytics
+- **Tool Chips**: Visual indicators with removal option
+- **Citation UI**: Button and panel with mock data
 
-### Backend Integration
-- **n8n Webhook**: Complete API route with streaming support at `/api/chat`
-- **Authentication**: NextAuth with Google OAuth (JWT sessions)
-- **Chat Management**: Full CRUD APIs for chats and messages
-- **Database Schema**: Prisma models for users, chats, messages with citations
+### Backend APIs (Structure Complete, Need Configuration)
+- **Chat API**: Streaming support, n8n webhook integration
+- **Authentication**: NextAuth with Google OAuth setup
+- **Chat Management**: CRUD operations for chats/messages
+- **Database Schema**: Complete Prisma models
 
-### User Experience
-- **Guest Mode**: Full chat functionality without login
-- **Auth Features**: Chat history, clickable citations for logged-in users
-- **Real-time Updates**: Streaming responses with bouncing dots loading animation
-- **Search**: Chat history search functionality
-- **Tools**: Recursive Summary tool dropdown with visual selection
-- **Message Layout**: 0.8x padding for responses, aligned right edges at 14.144px
-- **Citation Button**: Positioned 0.8cm right from response end
+## 🔧 Half-Implemented Features
+
+### Authentication System
+- ✅ NextAuth configuration with routes
+- ✅ Google OAuth provider setup
+- ❌ Using JWT instead of database sessions
+- ❌ Demo credentials instead of real ones
+- **Fix**: Configure Prisma adapter, add real Google OAuth credentials
+
+### Database Integration  
+- ✅ Prisma schema with all models
+- ✅ Database client configuration
+- ❌ No DATABASE_URL configured
+- ❌ Migrations not run
+- **Fix**: Set up PostgreSQL, run `npx prisma db push`
+
+### Chat Persistence
+- ✅ API routes for saving/loading chats
+- ✅ Authorization checks
+- ❌ Requires database connection
+- **Fix**: Complete database setup above
+
+## 📱 Frontend-Only Features (Need Backend)
+
+### Citation System
+- ✅ Frontend displays citations perfectly
+- ✅ CitationPanel with download functionality
+- ❌ Using mock data (3 legal cases)
+- ❌ No real document links from n8n/Haystack
+- **Integration**: Connect to Haystack for real document references
+
+### Tools Processing
+- ✅ UI for Page Turn and Analytics selection
+- ✅ Tools sent in API payload
+- ❌ No backend workflow implementation
+- **Integration**: Create n8n sub-workflows for each tool
+
+### Search Enhancement
+- ✅ Frontend filters loaded chats
+- ❌ No backend search API
+- **Future**: Add full-text search with Elasticsearch
 
 ## n8n Workflow Integration
 
@@ -81,6 +111,154 @@ User → Next.js App → API Route → n8n Webhook → DeepSeek AI → Response 
 - JSON/HTML converted to streaming format
 - Sources sent as separate SSE event
 - Character chunking: 2 chars at 30ms intervals
+
+## Tool Integration Architecture
+
+### Overview
+The lawyer-chat application supports multiple AI tools that trigger specific n8n workflows:
+- **Page Turn**: Page-by-page document processing for precise legal answers
+- **Analytics**: Data aggregation and trend analysis for document sets
+
+### Frontend Implementation (✅ Completed)
+1. **Multi-tool Selection**: Users can select multiple tools via dropdown
+2. **Tool Chips**: Selected tools display as removable chips at input bottom
+3. **API Payload**: Sends `tools` array instead of single `tool` string
+
+### Backend Integration Plan
+
+#### Phase 1: Update API Route (✅ Completed)
+```javascript
+// Current payload structure
+{
+  "message": "user query",
+  "tools": ["page-turn", "analytics"], // Array of selected tools
+  "sessionId": "user@email or anonymous",
+  "timestamp": "ISO 8601",
+  "metadata": { "userAgent", "origin" }
+}
+```
+
+#### Phase 2: n8n Workflow Architecture
+```
+Main Webhook → Tool Router → Tool-Specific Workflows → Response Merger
+                    ↓
+            Check tools array:
+              - Contains 'page-turn' → Page Turn Workflow
+              - Contains 'analytics' → Analytics Workflow
+              - Empty/default → Standard Chat Workflow
+```
+
+#### Phase 3: Tool Workflow Implementation
+
+##### Page Turn Workflow
+1. **Purpose**: Process documents page-by-page for precise answers
+2. **Implementation**:
+   ```
+   Input → Haystack Search (page-level) → Recursive Summary → AI Processing → Response
+   ```
+3. **Key Features**:
+   - Uses document hierarchy for navigation
+   - Maintains page context
+   - No separate output stream - integrated into main response
+
+##### Analytics Workflow
+1. **Purpose**: Generate data insights and trends from document sets
+2. **Implementation**:
+   ```
+   Input → Elasticsearch Query → Data Aggregation → Trend Analysis → Response + Data
+   ```
+3. **Key Features**:
+   - Batch document processing
+   - Statistical analysis
+   - Returns additional structured data
+
+#### Phase 4: n8n Configuration Steps
+
+1. **Create Tool Router (IF Node)**:
+   ```javascript
+   // After webhook node
+   Expression: {{ $json.body.tools.includes('page-turn') }}
+   TRUE → Execute Page Turn Sub-workflow
+   FALSE → Continue
+   
+   Expression: {{ $json.body.tools.includes('analytics') }}
+   TRUE → Execute Analytics Sub-workflow
+   FALSE → Default processing
+   ```
+
+2. **Configure Sub-workflows**:
+   - Each tool has dedicated workflow
+   - Workflows can run in parallel if multiple tools selected
+   - Results merge before streaming response
+
+3. **Response Structure**:
+   ```javascript
+   {
+     "response": "Main answer text...",
+     "analytics": {
+       // Only present if analytics tool used
+       "trends": [...],
+       "statistics": {...},
+       "charts": [...]
+     },
+     "sources": [...],
+     "toolsUsed": ["page-turn", "analytics"]
+   }
+   ```
+
+#### Phase 5: Frontend Response Handling
+
+1. **Parse Enhanced SSE Stream**:
+   ```javascript
+   // Handle analytics data
+   if (data.type === 'analytics') {
+     displayAnalytics(data.analytics);
+   }
+   ```
+
+2. **UI Updates**:
+   - Show active tools indicator during processing
+   - Display analytics in expandable section
+   - Maintain citation functionality
+
+### Implementation Timeline
+
+1. **Week 1**: 
+   - Set up n8n tool router workflow
+   - Create Page Turn sub-workflow with Haystack integration
+   
+2. **Week 2**:
+   - Implement Analytics sub-workflow
+   - Add response merging logic
+   - Test multi-tool combinations
+
+3. **Week 3**:
+   - Frontend analytics display components
+   - Performance optimization
+   - Error handling for tool failures
+
+### Future Tool Additions
+
+To add new tools:
+1. Add tool to frontend dropdown
+2. Create n8n sub-workflow
+3. Add routing condition in main workflow
+4. Update response handler if needed
+
+### Testing Strategy
+
+1. **Single Tool Tests**:
+   - Page Turn only: Verify page-specific responses
+   - Analytics only: Check data aggregation
+
+2. **Multi-Tool Tests**:
+   - Both tools selected: Ensure proper merging
+   - Performance with multiple workflows
+
+3. **Error Scenarios**:
+   - Tool workflow failures
+   - Timeout handling
+   - Graceful degradation
 
 ## 🔥 Critical Issues to Fix
 
@@ -205,12 +383,19 @@ Citations provide legal document sources for AI responses, displayed as numbered
 - **Soft White**: `#9CA3AF` - Welcome messages, prompts
 - **Borders**: `#2E2E38` - Dividers, borders
 - **White**: `#FFFFFF` - High contrast elements
+- **Focus Ring**: `rgba(255, 255, 255, 0.5)` - Greyish white for input/search focus
 
 ### Usage Patterns
 - **Headers/Navigation**: Blue (#004A84) in light, white in dark
 - **Buttons**: Gold (#C7A562) in light, transparent with borders in dark
 - **Messages**: Blue bubbles for user, gold for assistant
 - **Interactive Hover**: Darker shade variations (~10-15% darker)
+
+### Button Hover Effects
+- **Light Mode**: All buttons use `#B59552` on hover (TaskBar buttons, send button)
+- **Light Mode Citation**: Uses `#C8A665` on hover (lighter, 0.8x strength)
+- **Dark Mode**: All buttons use `#404147` on hover (unified across all interactive elements)
+- **Dark Mode Base**: Buttons start transparent with borders, hover adds solid background
 
 ## Responsive Design System
 

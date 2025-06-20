@@ -25,7 +25,7 @@ export default function LawyerChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -148,6 +148,21 @@ export default function LawyerChat() {
     }
   }, [session]);
 
+  // Close tools dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.tools-dropdown-container')) {
+        setShowToolsDropdown(false);
+      }
+    };
+
+    if (showToolsDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showToolsDropdown]);
+
   const fetchChatHistory = async () => {
     try {
       const response = await fetch('/api/chats');
@@ -266,7 +281,7 @@ export default function LawyerChat() {
         },
         body: JSON.stringify({
           message: inputText,
-          tool: selectedTool,
+          tools: selectedTools,
           sessionId: session?.user?.email || 'anonymous',
           userId: session?.user?.email
         }),
@@ -372,7 +387,7 @@ export default function LawyerChat() {
       );
     } finally {
       setIsLoading(false);
-      setSelectedTool(null);
+      setSelectedTools([]);
     }
   };
 
@@ -461,35 +476,37 @@ export default function LawyerChat() {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-center'}`}
+              className={`flex ${message.sender === 'user' ? 'justify-center' : 'justify-center'}`}
             >
-              <div className={`${message.sender === 'user' ? 'order-2 max-w-xl' : 'order-1'}`} style={{
-                width: message.sender === 'assistant' ? assistantWidth : undefined, // Responsive width for consistent centering
-                marginRight: message.sender === 'user' ? '14.144px' : '0' // Only user messages need extra right margin for alignment
+              <div className={`${message.sender === 'user' ? 'order-2' : 'order-1'}`} style={{
+                width: assistantWidth, // Both use same width for alignment
+                marginRight: '0'
               }}>
                 {/* Message bubble */}
-                <div
-                  className={`${
-                    message.sender === 'user'
-                      ? 'rounded-lg shadow-sm text-white inline-block'
-                      : isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                  }`}
-                  style={{
-                    padding: message.sender === 'user' 
-                      ? '15.6px 20.8px' // py-3 px-4 * 1.3 = 12px*1.3=15.6px, 16px*1.3=20.8px
-                      : '0',
-                    backgroundColor: message.sender === 'user' 
-                      ? (isDarkMode ? '#2a2b2f' : '#226EA7')
-                      : undefined
-                  }}
-                >
+                <div className={message.sender === 'user' ? 'flex justify-end' : ''}>
+                  <div
+                    className={`${
+                      message.sender === 'user'
+                        ? 'rounded-3xl shadow-sm text-white inline-block'
+                        : isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                    }`}
+                    style={{
+                      padding: message.sender === 'user' 
+                        ? '12px 28px' // Reduced vertical, increased horizontal for oval effect
+                        : '0',
+                      backgroundColor: message.sender === 'user' 
+                        ? (isDarkMode ? '#2a2b2f' : '#226EA7')
+                        : undefined,
+                      maxWidth: message.sender === 'user' ? '80%' : undefined // Prevent user message from being too wide
+                    }}
+                  >
                   <div>
                     <div>
                       {message.sender === 'user' ? (
                         <p className="text-sm leading-relaxed">{message.text}</p>
                       ) : (
                         <div className="text-sm leading-relaxed markdown-list" style={{
-                          padding: '12.48px 14.144px' // Reduced padding to 0.8x of original (15.6px * 0.8 = 12.48px, 17.68px * 0.8 = 14.144px)
+                          padding: '12.48px 14.144px' // Restored original padding
                         }}>
                           {message.text === '' && isLoading && message.id === messages[messages.length - 1].id ? (
                             <div className={`loading-dots ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -538,13 +555,13 @@ export default function LawyerChat() {
                       
                       {/* Citation Link - Show only after response is complete */}
                       {message.sender === 'assistant' && message.text && !(isLoading && message.id === messages[messages.length - 1].id) && (
-                        <div className={`mt-3 inline-block`} style={{ marginLeft: '30.24px' }}>
+                        <div className={`mt-3 w-full`}>
                           <button
                             onClick={() => handleCitationClick()}
-                            className={`px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
+                            className={`w-full px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
                               isDarkMode 
-                                ? 'bg-[#25262b] text-[#d1d1d1] border border-[#d1d1d1] hover:bg-[rgba(209,209,209,0.1)] active:bg-[rgba(209,209,209,0.2)]' 
-                                : 'bg-[#C7A562] text-[#004A84] hover:bg-[#B59552] active:bg-[#A08442]'
+                                ? 'bg-[#25262b] text-[#d1d1d1] hover:bg-[#404147] active:bg-[#505157]' 
+                                : 'bg-[#E1C88E] text-[#004A84] hover:bg-[#C8A665] active:bg-[#B59552]'
                             }`}
                             style={{
                               fontSize: '1.092rem', // 1.3x of text-sm (0.875rem × 1.3 = 1.1375rem)
@@ -557,6 +574,7 @@ export default function LawyerChat() {
                         </div>
                       )}
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -576,10 +594,10 @@ export default function LawyerChat() {
           left: hasMessages ? 'auto' : isTaskBarExpanded ? '280px' : '56px',
           right: hasMessages ? 'auto' : '0'
         }}>
-          <div className="w-full mx-auto" style={{
-            maxWidth: maxWidth,
-            paddingLeft: inputPadding,
-            paddingRight: inputPadding,
+          <div style={{
+            width: assistantWidth,
+            paddingLeft: messagePadding,
+            paddingRight: messagePadding,
           }}>
             <div className="relative">
               <textarea
@@ -611,12 +629,12 @@ export default function LawyerChat() {
                 disabled={isLoading}
               />
               
-              {/* Tools Button */}
-              <div className="absolute transition-all duration-500" style={{ 
+              {/* Tools Button and Selected Tools */}
+              <div className="absolute transition-all duration-500 flex items-center gap-2" style={{ 
                 left: buttonPadding, 
                 bottom: buttonPadding 
               }}>
-                <div className="relative">
+                <div className="relative tools-dropdown-container">
                   <button
                     onClick={() => setShowToolsDropdown(!showToolsDropdown)}
                     className={`flex items-center justify-center ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
@@ -632,23 +650,84 @@ export default function LawyerChat() {
                   
                   {/* Tools Dropdown */}
                   {showToolsDropdown && (
-                    <div className={`absolute bottom-full left-0 mb-2 w-48 ${isDarkMode ? 'bg-[#25262b]' : 'bg-white'} rounded-lg shadow-lg py-2 z-10`}>
-                      <button
-                        onClick={() => {
-                          setSelectedTool(selectedTool === 'recursive-summary' ? null : 'recursive-summary');
-                          setShowToolsDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                          selectedTool === 'recursive-summary' 
-                            ? isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-50 text-blue-700'
-                            : isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        Recursive Summary
-                      </button>
+                    <div 
+                      className={`absolute bottom-full left-0 mb-2 ${isDarkMode ? 'bg-[#25262b] border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg z-10`}
+                      style={{
+                        width: '147px', // 210px * 0.7 = 147px
+                        height: '135px', // 180px * 0.75 = 135px
+                        borderRadius: '16px', // Soft edges
+                        padding: '12px'
+                      }}
+                    >
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => {
+                            if (selectedTools.includes('page-turn')) {
+                              setSelectedTools(selectedTools.filter(t => t !== 'page-turn'));
+                            } else {
+                              setSelectedTools([...selectedTools, 'page-turn']);
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm font-semibold transition-all duration-200 rounded-lg ${
+                            selectedTools.includes('page-turn')
+                              ? isDarkMode ? 'bg-[#404147] text-white' : 'bg-[#E1C88E] text-[#004A84]'
+                              : isDarkMode ? 'text-gray-300 hover:bg-[#404147]' : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          Page Turn
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            if (selectedTools.includes('analytics')) {
+                              setSelectedTools(selectedTools.filter(t => t !== 'analytics'));
+                            } else {
+                              setSelectedTools([...selectedTools, 'analytics']);
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm font-semibold transition-all duration-200 rounded-lg ${
+                            selectedTools.includes('analytics')
+                              ? isDarkMode ? 'bg-[#404147] text-white' : 'bg-[#E1C88E] text-[#004A84]'
+                              : isDarkMode ? 'text-gray-300 hover:bg-[#404147]' : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          Analytics
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
+                
+                {/* Selected Tools Chips */}
+                {selectedTools.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    {selectedTools.map(tool => (
+                      <div
+                        key={tool}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                          isDarkMode 
+                            ? 'bg-[#404147] text-white' 
+                            : 'bg-[#E1C88E] text-[#004A84]'
+                        }`}
+                        style={{
+                          fontSize: `${parseInt(fontSize) * 0.75}px`,
+                          height: `${parseInt(buttonSize) * 0.8}px`
+                        }}
+                      >
+                        <span>{tool === 'page-turn' ? 'Page Turn' : 'Analytics'}</span>
+                        <button
+                          onClick={() => setSelectedTools(selectedTools.filter(t => t !== tool))}
+                          className={`ml-1 hover:opacity-70 transition-opacity`}
+                          aria-label={`Remove ${tool}`}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <path d="M7.41 6l2.29-2.29a1 1 0 0 0-1.41-1.41L6 4.59 3.71 2.29a1 1 0 0 0-1.41 1.41L4.59 6 2.29 8.29a1 1 0 1 0 1.41 1.41L6 7.41l2.29 2.29a1 1 0 0 0 1.41-1.41L7.41 6z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               {/* Send Button - Inside input box */}
@@ -675,7 +754,7 @@ export default function LawyerChat() {
                   const target = e.target as HTMLButtonElement;
                   if (!target.disabled) {
                     if (!isDarkMode) target.style.backgroundColor = '#B59552';
-                    else target.style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
+                    else target.style.backgroundColor = '#404147';
                   }
                 }}
                 onMouseLeave={(e) => {

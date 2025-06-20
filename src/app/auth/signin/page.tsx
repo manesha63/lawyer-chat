@@ -166,7 +166,7 @@ function SignInContent() {
                 onMouseEnter={(e) => {
                   if (!isLoading) {
                     if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#B59552';
-                    else (e.target as HTMLButtonElement).style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
+                    else (e.target as HTMLButtonElement).style.backgroundColor = '#404147';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -205,7 +205,7 @@ function SignInContent() {
                   onMouseEnter={(e) => {
                     if (!isLoading) {
                       if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#B59552';
-                      else (e.target as HTMLButtonElement).style.backgroundColor = 'rgba(209, 209, 209, 0.1)';
+                      else (e.target as HTMLButtonElement).style.backgroundColor = '#404147';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -248,8 +248,8 @@ function SignInContent() {
                 color: isDarkMode ? '#9CA3AF' : '#004A84'
               }}
               onMouseEnter={(e) => {
-                if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#D4B67D';
-                else (e.target as HTMLButtonElement).style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
+                if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#C8A665';
+                else (e.target as HTMLButtonElement).style.backgroundColor = '#404147';
               }}
               onMouseLeave={(e) => {
                 if (!isDarkMode) (e.target as HTMLButtonElement).style.backgroundColor = '#E1C88E';
