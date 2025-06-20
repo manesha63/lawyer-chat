@@ -9,14 +9,23 @@ import Sidebar from '@/components/Sidebar';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import TaskBar from '@/components/TaskBar';
 import CitationPanel from '@/components/CitationPanel';
+import AnalyticsDropdown from '@/components/AnalyticsDropdown';
 import { useSidebarStore } from '@/store/sidebar';
 import { getRandomMockCitation } from '@/utils/mockCitations';
+import { mockAnalyticsData } from '@/utils/mockAnalytics';
 
 interface Message {
   id: number;
   sender: 'user' | 'assistant';
   text: string;
   references?: string[];
+  analytics?: {
+    trends?: any[];
+    statistics?: Record<string, any>;
+    charts?: any[];
+    summary?: string;
+    [key: string]: any;
+  };
   timestamp: Date;
 }
 
@@ -267,8 +276,12 @@ export default function LawyerChat() {
       sender: 'assistant',
       text: '',
       references: [],
+      analytics: undefined,
       timestamp: new Date()
     };
+    
+    // Add mock analytics data if analytics tool is selected (for testing)
+    const hasAnalyticsTool = selectedTools.includes('analytics');
 
     setMessages(prev => [...prev, assistantMessage]);
 
@@ -300,6 +313,7 @@ export default function LawyerChat() {
           let currentText = '';
           let buffer = '';
           let sources: string[] = [];
+          let analytics: any = null;
           
           while (true) {
             const { done, value } = await reader.read();
@@ -337,7 +351,27 @@ export default function LawyerChat() {
                           : msg
                       )
                     );
+                  } else if (data.type === 'analytics') {
+                    analytics = data.analytics || data.data;
+                    setMessages(prev => 
+                      prev.map(msg => 
+                        msg.id === assistantId 
+                          ? { ...msg, analytics: analytics }
+                          : msg
+                      )
+                    );
                   } else if (data.type === 'done') {
+                    // Add mock analytics if analytics tool was used (for testing)
+                    if (hasAnalyticsTool && !analytics) {
+                      analytics = mockAnalyticsData;
+                      setMessages(prev => 
+                        prev.map(msg => 
+                          msg.id === assistantId 
+                            ? { ...msg, analytics: analytics }
+                            : msg
+                        )
+                      );
+                    }
                     // Save the complete message
                     await saveMessage('assistant', currentText, sources);
                   }
@@ -355,6 +389,7 @@ export default function LawyerChat() {
         // Update assistant message with response
         const assistantText = data.message || data.response || 'I received your message. Processing...';
         const assistantReferences = data.references || [];
+        const assistantAnalytics = data.analytics || (hasAnalyticsTool ? mockAnalyticsData : undefined);
         
         setMessages(prev => 
           prev.map(msg => 
@@ -362,7 +397,8 @@ export default function LawyerChat() {
               ? { 
                   ...msg, 
                   text: assistantText, 
-                  references: assistantReferences
+                  references: assistantReferences,
+                  analytics: assistantAnalytics
                 }
               : msg
           )
@@ -553,12 +589,12 @@ export default function LawyerChat() {
                         </div>
                       )}
                       
-                      {/* Citation Link - Show only after response is complete */}
+                      {/* Citation and Analytics Buttons - Show only after response is complete */}
                       {message.sender === 'assistant' && message.text && !(isLoading && message.id === messages[messages.length - 1].id) && (
-                        <div className={`mt-3 w-full`}>
+                        <div className={`mt-3 w-full flex items-center gap-2`}>
                           <button
                             onClick={() => handleCitationClick()}
-                            className={`w-full px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
+                            className={`flex-1 px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
                               isDarkMode 
                                 ? 'bg-[#25262b] text-[#d1d1d1] hover:bg-[#404147] active:bg-[#505157]' 
                                 : 'bg-[#E1C88E] text-[#004A84] hover:bg-[#C8A665] active:bg-[#B59552]'
@@ -571,6 +607,15 @@ export default function LawyerChat() {
                           >
                             CITATIONS
                           </button>
+                          
+                          {/* Analytics Button - Show only if analytics data exists */}
+                          {message.analytics && (
+                            <AnalyticsDropdown 
+                              data={message.analytics}
+                              messageWidth={parseInt(assistantWidth.toString())}
+                              inputAreaHeight={parseInt(inputHeight) + 80} // Input height + padding
+                            />
+                          )}
                         </div>
                       )}
                     </div>
