@@ -612,8 +612,6 @@ export default function LawyerChat() {
                           {message.analytics && (
                             <AnalyticsDropdown 
                               data={message.analytics}
-                              messageWidth={parseInt(assistantWidth.toString())}
-                              inputAreaHeight={parseInt(inputHeight) + 80} // Input height + padding
                             />
                           )}
                         </div>
