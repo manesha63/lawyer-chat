@@ -39,6 +39,7 @@ User → Next.js App → API Route → n8n Webhook → DeepSeek AI → Response 
 - **Tools UI**: Multi-select dropdown with Page Turn & Analytics
 - **Tool Chips**: Visual indicators with removal option
 - **Citation UI**: Button and panel with mock data
+- **Analytics Modal**: Centered overlay with gold theme matching citation styling
 
 ### Backend APIs (Structure Complete, Need Configuration)
 - **Chat API**: Streaming support, n8n webhook integration
@@ -394,8 +395,15 @@ Citations provide legal document sources for AI responses, displayed as numbered
 ### Button Hover Effects
 - **Light Mode**: All buttons use `#B59552` on hover (TaskBar buttons, send button)
 - **Light Mode Citation**: Uses `#C8A665` on hover (lighter, 0.8x strength)
+- **Light Mode Analytics**: Uses `#C8A665` on hover (matches citation button)
 - **Dark Mode**: All buttons use `#404147` on hover (unified across all interactive elements)
 - **Dark Mode Base**: Buttons start transparent with borders, hover adds solid background
+
+### Analytics Modal Styling
+- **Light Mode**: Gold-themed borders (#E1C88E), cream backgrounds (#FBF7F1), blue text (#004A84)
+- **Dark Mode**: Standard dark theme with gray borders and backgrounds
+- **Positioning**: Centered overlay with semi-transparent backdrop
+- **Scrollbar**: Custom styled scrollbar with theme-appropriate colors
 
 ## Responsive Design System
 
