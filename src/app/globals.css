@@ -3,6 +3,8 @@
 /* Browser compatibility fixes */
 html {
   -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
@@ -305,6 +307,30 @@ body.dark .dark\:text-white * {
 .assistant-message-light *,
 .assistant-message-dark * {
   color: inherit !important;
+}
+
+/* Override Tailwind's backdrop-blur to include webkit prefix */
+.backdrop-blur-sm {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );
+  backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );
+}
+
+/* Fix Next.js dev tools CSS */
+[data-nextjs-dialog-backdrop] {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+[data-nextjs-container-errors-pseudo-html-collapse='true'] .nextjs__container_errors__component-stack code {
+  -webkit-mask-image: linear-gradient(to bottom,rgba(0,0,0,0) 0%,black 10%);
+  mask-image: linear-gradient(to bottom,rgba(0,0,0,0) 0%,black 10%);
+}
+
+.dev-tools-indicator-item {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* Loading dots animation */

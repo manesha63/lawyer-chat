@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
     // Prepare payload for n8n webhook
     const payload = {
       message: body.message,
-      tool: body.tool || 'default',
+      tools: body.tools || [], // Updated to accept tools array
+      tool: body.tool || 'default', // Keep for backward compatibility
       sessionId: body.sessionId || 'anonymous',
       userId: body.userId,
       timestamp: new Date().toISOString(),
@@ -52,6 +53,56 @@ export async function POST(request: NextRequest) {
       console.error('Webhook response error:', response.status, response.statusText);
       const errorText = await response.text();
       console.error('Error details:', errorText);
+      
+      // If n8n webhook is not active, provide a fallback response
+      if (response.status === 404 && errorText.includes('workflow must be active')) {
+        console.warn('⚠️  n8n workflow is not active. Using fallback response.');
+        
+        // Create a fallback streaming response
+        const fallbackText = "I'm currently unable to connect to the AI service. Please ensure the n8n workflow is activated. \n\nTo fix this:\n1. Open n8n at http://localhost:5678\n2. Find the workflow with webhook ID: c188c31c-1c45-4118-9ece-5b6057ab5177\n3. Activate it using the toggle in the top-right\n\nFor testing, I can still demonstrate the UI features.";
+        
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          async start(controller) {
+            // Stream the fallback message
+            const chunkSize = 2;
+            for (let i = 0; i < fallbackText.length; i += chunkSize) {
+              const chunk = fallbackText.slice(i, i + chunkSize);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk, type: 'text' })}\n\n`));
+              await new Promise(resolve => setTimeout(resolve, 30));
+            }
+            
+            // Add mock analytics if analytics tool was selected
+            if (payload.tools?.includes('analytics')) {
+              const mockAnalytics = {
+                trends: [
+                  { period: "Q1 2024", value: 156, category: "Contract Reviews" },
+                  { period: "Q2 2024", value: 203, category: "Contract Reviews" }
+                ],
+                statistics: {
+                  totalDocuments: 1247,
+                  averageProcessingTime: "2.3 days",
+                  successRate: "94.2%"
+                },
+                summary: "Analytics data (mock) - n8n workflow not active"
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ analytics: mockAnalytics, type: 'analytics' })}\n\n`));
+            }
+            
+            // Send done signal
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+            controller.close();
+          }
+        });
+        
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          }
+        });
+      }
       
       return new Response(JSON.stringify({ 
         error: 'Failed to process message',

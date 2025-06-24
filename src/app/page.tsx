@@ -669,7 +669,7 @@ export default function LawyerChat() {
                   const maxHeight = parseInt(maxInputHeight);
                   target.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
                 }}
-                disabled={isLoading}
+                disabled={false}
               />
               
               {/* Tools Button and Selected Tools */}
@@ -776,7 +776,7 @@ export default function LawyerChat() {
               {/* Send Button - Inside input box */}
               <button
                 onClick={handleSend}
-                disabled={!inputText.trim() || isLoading}
+                disabled={!inputText.trim()}
                 aria-label="Send message"
                 title="Send message"
                 className={`absolute transition-all duration-300 rounded-lg flex items-center justify-center ${
