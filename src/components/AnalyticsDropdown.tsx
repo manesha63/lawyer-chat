@@ -34,12 +34,20 @@ export default function AnalyticsDropdown({ data }: AnalyticsDropdownProps) {
       }
     }
 
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
     }
   }, [isOpen])
 
@@ -93,16 +101,14 @@ export default function AnalyticsDropdown({ data }: AnalyticsDropdownProps) {
       </button>
 
       {isOpen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-[9998]"
-            onClick={() => setIsOpen(false)}
-          />
-          <div 
-            ref={dropdownRef}
-            className={`${isDarkMode ? 'bg-[#25262b] border-gray-700' : 'bg-white border-[#E1C88E] border-opacity-40'} border rounded-lg shadow-2xl flex flex-col`}
-            style={getDropdownPosition()}
-          >
+        <div 
+          ref={dropdownRef}
+          className={`${isDarkMode ? 'bg-[#25262b] border-gray-700' : 'bg-white border-[#E1C88E] border-opacity-40'} border rounded-lg shadow-2xl flex flex-col`}
+          style={{
+            ...getDropdownPosition(),
+            boxShadow: '0 0 0 2000px rgba(0, 0, 0, 0.3)'
+          }}
+        >
           <div className={`flex-shrink-0 px-4 py-3 border-b flex items-center justify-between ${isDarkMode ? 'bg-[#1a1b1e] border-gray-700' : 'bg-[#FBF7F1] border-[#E1C88E] border-opacity-30'}`}>
             <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-[#004A84]'}`}>Analytics Results</h3>
             <div className="flex items-center gap-2">
@@ -168,7 +174,6 @@ export default function AnalyticsDropdown({ data }: AnalyticsDropdownProps) {
             )}
           </div>
         </div>
-        </>
       )}
     </>
   )

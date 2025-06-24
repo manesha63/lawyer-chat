@@ -110,23 +110,48 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
       >
         {/* Toggle Button and Header */}
         <div className="relative">
-          <div className={`flex items-center ${isTaskBarExpanded ? 'px-4' : 'px-2 justify-center'} pt-2 pb-4`}>
-            <button
-              onClick={() => toggleTaskBar()}
-              className={`p-2 flex items-center justify-center transition-all duration-300 rounded-lg ${
-                isDarkMode 
-                  ? 'hover:bg-[#404147]' 
-                  : 'hover:bg-gray-100'
-              }`}
-              style={{ color: isDarkMode ? '#d1d1d1' : '#004A84' }}
-              aria-label={isTaskBarExpanded ? 'Collapse menu' : 'Expand menu'}
-            >
-              <Menu size={24} strokeWidth={2.5} />
-            </button>
-            {isTaskBarExpanded && (
-              <h1 className="ml-3 text-lg font-semibold" style={{ color: isDarkMode ? '#d1d1d1' : '#004A84' }}>
-                AI Legal
-              </h1>
+          <div className={`flex items-center ${isTaskBarExpanded ? 'px-4 justify-between' : 'px-2 justify-center'} pt-2 pb-4`}>
+            {isTaskBarExpanded ? (
+              <>
+                {/* Logo and Title on the left */}
+                <div className="flex items-center gap-2">
+                  <img 
+                    src="/logo.png" 
+                    alt="AI Legal Logo" 
+                    className="h-8 w-8 object-contain"
+                  />
+                  <h1 className="text-lg font-semibold" style={{ color: isDarkMode ? '#d1d1d1' : '#004A84' }}>
+                    AI Legal
+                  </h1>
+                </div>
+                {/* Hamburger toggle on the right */}
+                <button
+                  onClick={() => toggleTaskBar()}
+                  className={`p-2 flex items-center justify-center transition-all duration-300 rounded-lg ${
+                    isDarkMode 
+                      ? 'hover:bg-[#404147]' 
+                      : 'hover:bg-gray-100'
+                  }`}
+                  style={{ color: isDarkMode ? '#d1d1d1' : '#004A84' }}
+                  aria-label="Collapse menu"
+                >
+                  <Menu size={24} strokeWidth={2.5} />
+                </button>
+              </>
+            ) : (
+              /* Hamburger toggle centered when collapsed */
+              <button
+                onClick={() => toggleTaskBar()}
+                className={`p-2 flex items-center justify-center transition-all duration-300 rounded-lg ${
+                  isDarkMode 
+                    ? 'hover:bg-[#404147]' 
+                    : 'hover:bg-gray-100'
+                }`}
+                style={{ color: isDarkMode ? '#d1d1d1' : '#004A84' }}
+                aria-label="Expand menu"
+              >
+                <Menu size={24} strokeWidth={2.5} />
+              </button>
             )}
           </div>
           
@@ -361,7 +386,7 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
           <div className={`${isTaskBarExpanded ? 'px-4' : 'px-2'} pb-4`}>
             
             {/* User/Auth Button */}
-            <div className={`flex items-center ${isTaskBarExpanded ? 'justify-start' : 'justify-center'}`}>
+            <div className={`flex items-center ${isTaskBarExpanded ? 'justify-start' : 'justify-center'} relative`}>
               <div className="relative flex items-center" ref={userMenuRef}>
                 <button
                   onClick={() => {
@@ -413,9 +438,16 @@ export default function TaskBar({ onChatSelect, onNewChat }: TaskBarProps = {}) 
 
               {/* Dropdown Menu */}
               {showUserMenu && (
-                <div className={`absolute bottom-full mb-2 ${isTaskBarExpanded ? 'right-0' : 'left-0'} ${!isTaskBarExpanded ? 'min-w-[200px]' : 'w-48'} rounded-2xl shadow-lg z-50 overflow-hidden ${
-                  isDarkMode ? 'bg-[#25262b] border border-gray-700' : 'bg-white border border-gray-200'
-                }`}>
+                <div 
+                  className={`fixed rounded-2xl shadow-lg z-[9999] overflow-hidden ${
+                    isDarkMode ? 'bg-[#25262b] border border-gray-700' : 'bg-white border border-gray-200'
+                  }`}
+                  style={{
+                    bottom: '60px',
+                    left: isTaskBarExpanded ? '16px' : '64px',
+                    minWidth: '200px'
+                  }}
+                >
                   {session ? (
                     <>
                       <div className={`px-5 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>

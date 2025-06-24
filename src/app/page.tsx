@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react';
 import { Send, Wrench } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import Sidebar from '@/components/Sidebar';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import TaskBar from '@/components/TaskBar';
 import CitationPanel from '@/components/CitationPanel';
@@ -43,7 +42,7 @@ export default function LawyerChat() {
   const [windowWidth, setWindowWidth] = useState(1440); // Default value for SSR
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isExpanded, toggleSidebar, isDarkMode, isTaskBarExpanded } = useSidebarStore();
+  const { isDarkMode, isTaskBarExpanded } = useSidebarStore();
   
   // Dynamic input sizing based on chat content
   const hasMessages = messages.length > 0; // Any messages present
@@ -454,21 +453,9 @@ export default function LawyerChat() {
         onChatSelect={selectChat}
         onNewChat={createNewChat}
       />
-      
-      {/* Sidebar - Only show for logged-in users */}
-      {session?.user && (
-        <Sidebar
-          isExpanded={isExpanded}
-          onToggleExpand={toggleSidebar}
-          onNewChat={createNewChat}
-          chats={chatHistory}
-          currentChatId={currentChatId || undefined}
-          onChatSelect={selectChat}
-        />
-      )}
 
-      {/* Main Content Container - Adjust margin for taskbar and sidebar */}
-      <div className={`flex-1 flex transition-all duration-300 ${isTaskBarExpanded ? 'ml-[280px]' : 'ml-[56px]'} ${session?.user && isExpanded ? 'md:ml-[316px]' : ''}`}>
+      {/* Main Content Container - Adjust margin for taskbar only */}
+      <div className={`flex-1 flex transition-all duration-300 ${isTaskBarExpanded ? 'ml-[280px]' : 'ml-[56px]'}`}>
         {/* Chat Section */}
         <div className={`flex-1 flex flex-col transition-all duration-300 ${showCitationPanel ? 'w-1/2' : 'w-full'}`}>
         {/* Header */}
@@ -476,7 +463,14 @@ export default function LawyerChat() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               {!isTaskBarExpanded && (
-                <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : ''}`} style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
+                <div className="flex items-center gap-2">
+                  <img 
+                    src="/logo.png" 
+                    alt="AI Legal Logo" 
+                    className="h-8 w-8 object-contain"
+                  />
+                  <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : ''}`} style={{ color: isDarkMode ? '#ffffff' : '#004A84' }}>AI Legal</h1>
+                </div>
               )}
             </div>
             
@@ -589,32 +583,38 @@ export default function LawyerChat() {
                         </div>
                       )}
                       
-                      {/* Citation and Analytics Buttons - Show only after response is complete */}
+                      {/* Citation and Analytics Buttons - Show only for signed-in users after response is complete */}
                       {message.sender === 'assistant' && message.text && !(isLoading && message.id === messages[messages.length - 1].id) && (
-                        <div className={`mt-3 w-full flex items-center gap-2`}>
-                          <button
-                            onClick={() => handleCitationClick()}
-                            className={`flex-1 px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
-                              isDarkMode 
-                                ? 'bg-[#25262b] text-[#d1d1d1] hover:bg-[#404147] active:bg-[#505157]' 
-                                : 'bg-[#E1C88E] text-[#004A84] hover:bg-[#C8A665] active:bg-[#B59552]'
-                            }`}
-                            style={{
-                              fontSize: '1.092rem', // 1.3x of text-sm (0.875rem × 1.3 = 1.1375rem)
-                              fontWeight: '600',
-                              letterSpacing: '0.05em'
-                            }}
-                          >
-                            CITATIONS
-                          </button>
-                          
-                          {/* Analytics Button - Show only if analytics data exists */}
-                          {message.analytics && (
-                            <AnalyticsDropdown 
-                              data={message.analytics}
-                            />
-                          )}
-                        </div>
+                        session ? (
+                          <div className={`mt-3 w-full flex items-center gap-2`}>
+                            <button
+                              onClick={() => handleCitationClick()}
+                              className={`flex-1 px-4 py-2 rounded-lg transition-all duration-200 transform active:scale-95 ${
+                                isDarkMode 
+                                  ? 'bg-[#25262b] text-[#d1d1d1] hover:bg-[#404147] active:bg-[#505157]' 
+                                  : 'bg-[#E1C88E] text-[#004A84] hover:bg-[#C8A665] active:bg-[#B59552]'
+                              }`}
+                              style={{
+                                fontSize: '1.092rem', // 1.3x of text-sm (0.875rem × 1.3 = 1.1375rem)
+                                fontWeight: '600',
+                                letterSpacing: '0.05em'
+                              }}
+                            >
+                              CITATIONS
+                            </button>
+                            
+                            {/* Analytics Button - Show only if analytics data exists */}
+                            {message.analytics && (
+                              <AnalyticsDropdown 
+                                data={message.analytics}
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          <div className={`mt-3 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <p>Sign in to access citations, analytics, and advanced tools</p>
+                          </div>
+                        )
                       )}
                     </div>
                   </div>
@@ -672,24 +672,25 @@ export default function LawyerChat() {
                 disabled={false}
               />
               
-              {/* Tools Button and Selected Tools */}
-              <div className="absolute transition-all duration-500 flex items-center gap-2" style={{ 
-                left: buttonPadding, 
-                bottom: buttonPadding 
-              }}>
-                <div className="relative tools-dropdown-container">
-                  <button
-                    onClick={() => setShowToolsDropdown(!showToolsDropdown)}
-                    className={`flex items-center justify-center ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
-                    aria-label="Select tool"
-                    title="Select tool"
-                    style={{
-                      width: buttonSize,
-                      height: buttonSize
-                    }}
-                  >
-                    <Wrench size={iconSize} />
-                  </button>
+              {/* Tools Button and Selected Tools - Only for signed-in users */}
+              {session && (
+                <div className="absolute transition-all duration-500 flex items-center gap-2" style={{ 
+                  left: buttonPadding, 
+                  bottom: buttonPadding 
+                }}>
+                  <div className="relative tools-dropdown-container">
+                    <button
+                      onClick={() => setShowToolsDropdown(!showToolsDropdown)}
+                      className={`flex items-center justify-center ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
+                      aria-label="Select tool"
+                      title="Select tool"
+                      style={{
+                        width: buttonSize,
+                        height: buttonSize
+                      }}
+                    >
+                      <Wrench size={iconSize} />
+                    </button>
                   
                   {/* Tools Dropdown */}
                   {showToolsDropdown && (
@@ -772,6 +773,7 @@ export default function LawyerChat() {
                   </div>
                 )}
               </div>
+              )}
               
               {/* Send Button - Inside input box */}
               <button
