@@ -44,6 +44,8 @@ next-env.d.ts
 
 # Sensitive files
 CLAUDE.md
+COLOR_PALETTE.md
+CITATION_IMPLEMENTATION.md
 .env
 .env.local
 .env.production
