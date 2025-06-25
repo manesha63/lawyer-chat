@@ -71,3 +71,7 @@ logs/
 # Test files
 test-*.js
 test-*.ts
+test-*.html
+**/test-*
+**/debug-*
+scripts/test-*.ts

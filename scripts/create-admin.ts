@@ -5,7 +5,7 @@
  * Usage: npm run create-admin -- --email admin@reichmanjorgensen.com --password YourSecurePassword123!
  */
 
-import { hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma';
 import dotenv from 'dotenv';
 import { parseArgs } from 'util';
@@ -74,7 +74,7 @@ async function createAdmin() {
     }
 
     // Hash password
-    const hashedPassword = await hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create admin user
     const user = await prisma.user.create({

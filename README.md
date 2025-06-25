@@ -1,8 +1,10 @@
 # Lawyer Chat - AI-Powered Legal Assistant
 
+*Last Updated: 2025-06-25 - v0.9.5*
+
 ## 🚀 Overview
 
-Lawyer Chat is a modern web application that provides an AI-powered chat interface for legal document queries. Built with Next.js 15 and integrated with n8n workflows and DeepSeek AI, it delivers intelligent legal assistance with document citations and advanced analysis tools.
+Lawyer Chat is a modern web application that provides an AI-powered chat interface for legal document queries. Built with Next.js 15 and integrated with n8n workflows and DeepSeek AI, it delivers intelligent legal assistance with document citations and advanced analysis tools. The system features enterprise-grade security, complete email verification, and a production-ready UI.
 
 ## 🎯 Key Features
 
@@ -10,18 +12,22 @@ Lawyer Chat is a modern web application that provides an AI-powered chat interfa
 - **Document Citations**: Automatic source attribution for legal accuracy
 - **Multi-Tool Support**: Page Turn and Analytics tools for comprehensive analysis
 - **Dark Mode**: Professional theme with legal industry colors
-- **Guest Mode**: Full functionality without authentication
+- **Enterprise Security**: Domain-restricted access (@reichmanjorgensen.com)
+- **Email Verification**: Full email system with multiple SMTP providers
+- **Authentication**: Secure login with account lockout protection
 - **Chat History**: Persistent conversations with time-based grouping
-- **Responsive Design**: Optimized for desktop and mobile devices
+- **Responsive Design**: Optimized for desktop and mobile devices (320px to 4K)
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15.3.3, React 19, TypeScript
 - **Styling**: Tailwind CSS v4
-- **Authentication**: NextAuth.js with Google OAuth
+- **Authentication**: NextAuth.js with Prisma adapter
 - **Database**: PostgreSQL with Prisma ORM
 - **State Management**: Zustand with persistence
 - **AI Integration**: n8n webhooks → DeepSeek R1 model
+- **Email**: Nodemailer with Office 365/Gmail/SendGrid support
+- **Security**: Rate limiting, input sanitization, CSRF protection
 - **UI Components**: Lucide icons, React Markdown, date-fns
 
 ## 📁 Project Structure
@@ -85,19 +91,21 @@ User Input → Next.js App → API Route → n8n Webhook → DeepSeek AI
 
 ## 🚦 Project Status
 
-### ✅ Completed (90%)
+### ✅ Completed (95%)
 - Full chat interface with streaming
 - Dark mode with professional theme
-- Guest mode functionality
+- Enterprise authentication system
+- Email verification with multiple SMTP providers
+- Database integration with PostgreSQL
+- Security infrastructure (rate limiting, input validation)
 - Multi-tool selection UI
 - Citation display system
-- Responsive design
-- API structure
+- Responsive design (320px to 4K)
+- API structure with full CRUD operations
+- Admin user management
 
 ### 🔧 In Progress
-- Database connection setup
-- Real Google OAuth credentials
-- n8n webhook configuration
+- n8n webhook activation (ready, just needs to be turned on)
 - Tool workflow implementation
 
 ### 📋 Pending
@@ -105,14 +113,15 @@ User Input → Next.js App → API Route → n8n Webhook → DeepSeek AI
 - Analytics tool backend
 - Full-text search
 - Export functionality
+- OAuth providers (Google, Microsoft)
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database
+- PostgreSQL database (or Docker)
 - n8n instance (for AI integration)
-- Google OAuth credentials
+- SMTP credentials (optional, for email)
 
 ### Installation
 
@@ -137,14 +146,20 @@ Edit `.env.local` with your configuration:
 # Authentication
 NEXTAUTH_URL=http://localhost:3001
 NEXTAUTH_SECRET=your-secret-key
-GOOGLE_CLIENT_ID=your-google-id
-GOOGLE_CLIENT_SECRET=your-google-secret
+NEXT_PUBLIC_NEXTAUTH_URL=http://localhost:3001
 
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/lawyerchat
 
 # n8n Integration
 N8N_WEBHOOK_URL=http://localhost:5678/webhook/your-webhook-id
+
+# Email Configuration (Optional)
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USER=your-email@reichmanjorgensen.com
+SMTP_PASS=your-password
+SMTP_FROM=AI Legal <noreply@reichmanjorgensen.com>
 ```
 
 4. **Set up the database**
@@ -153,12 +168,33 @@ npx prisma generate
 npx prisma db push
 ```
 
-5. **Run the development server**
+5. **Create an admin user**
+```bash
+npm run create-admin -- --email admin@reichmanjorgensen.com --password YourSecurePassword123!
+```
+
+6. **Run the development server**
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3001](http://localhost:3001) to see the application.
+
+## 🐳 Docker Setup
+
+For backend services (PostgreSQL, n8n, Elasticsearch):
+
+```bash
+cd ../data-compose
+docker-compose up -d
+```
+
+Ensure the database port is exposed in `docker-compose.yml`:
+```yaml
+db:
+  ports:
+    - "5432:5432"
+```
 
 ## 🔌 API Endpoints
 
@@ -194,14 +230,38 @@ node test-api.js
 
 # Test n8n webhook integration
 node test-webhook.js
+
+# Test email sending
+npm run test-email -- --to your-email@reichmanjorgensen.com
 ```
+
+## 🔐 Security Features
+
+- **Domain Restriction**: Only @reichmanjorgensen.com emails allowed
+- **Account Lockout**: After 5 failed login attempts (30-minute lockout)
+- **Rate Limiting**: 20 req/min for chat, 5 req/min for auth
+- **Input Validation**: All inputs sanitized with DOMPurify
+- **Audit Logging**: Complete trail of security events
+- **CSRF Protection**: Ready but not activated
+- **Security Headers**: X-Frame-Options, CSP, HSTS configured
 
 ## 🚧 Known Issues
 
-1. **Authentication**: Currently using JWT sessions (should migrate to database sessions)
+1. **n8n Workflow**: Not activated (needs manual activation in n8n UI)
 2. **Citations**: Using mock data (needs Haystack integration)
 3. **Tools**: Backend workflows not implemented
-4. **Database**: Requires PostgreSQL setup and configuration
+4. **OAuth**: Google/Microsoft OAuth not configured
+
+## 📈 Recent Updates (2025-06-25)
+
+- ✅ Fixed all authentication errors
+- ✅ Implemented complete email system with Nodemailer
+- ✅ Resolved database connection issues
+- ✅ Fixed PostCSS/Tailwind CSS build errors
+- ✅ Fixed API fetch credentials issue
+- ✅ Added comprehensive security features
+- ✅ Created admin user management
+- ✅ Updated all documentation
 
 ## 🤝 Contributing
 

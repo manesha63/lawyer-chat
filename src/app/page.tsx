@@ -61,16 +61,19 @@ export default function LawyerChat() {
 
   // Calculate dynamic sizing based on window width and panel states
   const calculateResponsiveSizing = () => {
+    // Ensure windowWidth is valid
+    const safeWindowWidth = Math.max(320, windowWidth || 1440); // Minimum 320px width
+    
     // Calculate available width
     const taskBarWidth = isTaskBarExpanded ? 280 : 56;
     const citationWidth = showCitationPanel ? 400 : 0;
-    const availableWidth = windowWidth - taskBarWidth - citationWidth;
+    const availableWidth = Math.max(100, safeWindowWidth - taskBarWidth - citationWidth); // Ensure positive
     
     // Calculate proportional values based on available space
     // Base values for full desktop (1920px)
     const baseWidth = 1920;
     const baseAvailable = baseWidth - 56; // Base with collapsed taskbar
-    const spaceRatio = availableWidth / baseAvailable;
+    const spaceRatio = Math.max(0.1, Math.min(2, availableWidth / baseAvailable)); // Clamp between 0.1 and 2
     
     // Proportional padding calculation
     const baseMsgPadding = 95; // ~2.5cm in pixels
@@ -121,20 +124,25 @@ export default function LawyerChat() {
     const buttonPadding = Math.max(12, 16 * spaceRatio); // Dynamic padding from edges
     const sendButtonBottom = buttonPadding * 1.5; // Send button slightly higher for visual balance
     
+    // Validate all values before returning
+    const validateNumber = (value: number, fallback: number): number => {
+      return isNaN(value) || !isFinite(value) ? fallback : value;
+    };
+    
     return {
-      messagePadding: `${messagePadding}px`,
-      inputPadding: `${inputPadding}px`,
-      inputHeight: `${inputHeight}px`,
-      maxInputHeight: `${maxInputHeight}px`,
-      fontSize: `${fontSize}px`,
+      messagePadding: `${validateNumber(messagePadding, 19)}px`,
+      inputPadding: `${validateNumber(inputPadding, 38)}px`,
+      inputHeight: `${validateNumber(inputHeight, 80)}px`,
+      maxInputHeight: `${validateNumber(maxInputHeight, 160)}px`,
+      fontSize: `${validateNumber(fontSize, 14)}px`,
       maxWidth,
-      assistantWidth: `${responsiveAssistantWidth}px`,
-      buttonSize: `${buttonSize}px`,
-      iconSize: Math.round(iconSize),
-      sendButtonSize: `${sendButtonSize}px`,
-      sendIconSize,
-      buttonPadding: `${buttonPadding}px`,
-      sendButtonBottom: `${sendButtonBottom}px`
+      assistantWidth: `${validateNumber(responsiveAssistantWidth, 320)}px`,
+      buttonSize: `${validateNumber(buttonSize, 24)}px`,
+      iconSize: Math.round(validateNumber(iconSize, 16)),
+      sendButtonSize: `${validateNumber(sendButtonSize, 32)}px`,
+      sendIconSize: Math.round(validateNumber(sendIconSize, 20)),
+      buttonPadding: `${validateNumber(buttonPadding, 12)}px`,
+      sendButtonBottom: `${validateNumber(sendButtonBottom, 18)}px`
     };
   };
 
@@ -172,7 +180,9 @@ export default function LawyerChat() {
 
   const fetchChatHistory = async () => {
     try {
-      const response = await fetch('/api/chats');
+      const response = await fetch('/api/chats', {
+        credentials: 'include'
+      });
       if (response.ok) {
         // Chat history is now managed by TaskBar component
         await response.json(); // Consume response to prevent memory leak
@@ -189,7 +199,8 @@ export default function LawyerChat() {
       const response = await fetch('/api/chats', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New Chat' })
+        body: JSON.stringify({ title: 'New Chat' }),
+        credentials: 'include'
       });
       
       if (response.ok) {
@@ -205,7 +216,9 @@ export default function LawyerChat() {
 
   const selectChat = async (chatId: string) => {
     try {
-      const response = await fetch(`/api/chats/${chatId}`);
+      const response = await fetch(`/api/chats/${chatId}`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const chat = await response.json();
         setCurrentChatId(chatId);
@@ -234,7 +247,8 @@ export default function LawyerChat() {
       await fetch(`/api/chats/${currentChatId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, content, references })
+        body: JSON.stringify({ role, content, references }),
+        credentials: 'include'
       });
       
       // Update chat history to reflect new message
@@ -665,7 +679,7 @@ export default function LawyerChat() {
                   const target = e.target as HTMLTextAreaElement;
                   target.style.height = inputHeight;
                   const scrollHeight = target.scrollHeight;
-                  const maxHeight = parseInt(maxInputHeight);
+                  const maxHeight = parseInt(maxInputHeight) || 160;
                   target.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
                 }}
                 disabled={false}
@@ -753,8 +767,8 @@ export default function LawyerChat() {
                             : 'bg-[#E1C88E] text-[#004A84]'
                         }`}
                         style={{
-                          fontSize: `${parseInt(fontSize) * 0.75}px`,
-                          height: `${parseInt(buttonSize) * 0.8}px`
+                          fontSize: `${Math.max(10, (parseInt(fontSize) || 14) * 0.75)}px`,
+                          height: `${Math.max(16, (parseInt(buttonSize) || 24) * 0.8)}px`
                         }}
                       >
                         <span>{tool === 'page-turn' ? 'Page Turn' : 'Analytics'}</span>
