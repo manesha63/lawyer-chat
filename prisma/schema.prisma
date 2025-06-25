@@ -49,11 +49,25 @@ model User {
   emailVerified DateTime?
   password      String?   // Hashed password for RJLF employees
   image         String?
+  role          String    @default("user") // user, admin
+  
+  // Registration tracking
+  registrationToken        String?   @unique
+  registrationTokenExpires DateTime?
+  registrationIp           String?
+  
+  // Security tracking
+  failedLoginAttempts Int      @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  lastLoginIp         String?
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
   chats         Chat[]
+  auditLogs     AuditLog[]
 }
 
 model VerificationToken {
@@ -86,4 +100,24 @@ model Message {
   createdAt   DateTime @default(now())
   
   chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+// Audit logging for admin monitoring
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // USER_REGISTRATION, LOGIN_SUCCESS, LOGIN_FAILED, etc.
+  userId      String?
+  email       String?
+  ipAddress   String?
+  userAgent   String?
+  success     Boolean  @default(true)
+  errorMessage String?
+  metadata    Json?    // Additional data
+  createdAt   DateTime @default(now())
+  
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([action, createdAt])
+  @@index([email])
+  @@index([userId])
 }

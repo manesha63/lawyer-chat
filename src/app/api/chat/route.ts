@@ -1,12 +1,28 @@
 import { NextRequest } from 'next/server';
+import { validateMessage, sanitizeJson } from '@/utils/validation';
+import { getAuthHeaders } from '@/utils/apiAuth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if user is authenticated (optional but recommended)
+    const session = await getServerSession(authOptions);
+    
+    // Log session status for debugging
+    if (!session) {
+      console.warn('No authenticated session - proceeding with anonymous request');
+    }
+    
     const body = await request.json();
     
-    // Validate required fields
-    if (!body.message) {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
+    // Sanitize JSON to prevent prototype pollution
+    const sanitizedBody = sanitizeJson(body);
+    
+    // Validate and sanitize message
+    const messageValidation = validateMessage(sanitizedBody.message || '');
+    if (!messageValidation.isValid) {
+      return new Response(JSON.stringify({ error: messageValidation.error }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -22,29 +38,30 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Prepare payload for n8n webhook
+    // Prepare payload for n8n webhook with sanitized data
     const payload = {
-      message: body.message,
-      tools: body.tools || [], // Updated to accept tools array
-      tool: body.tool || 'default', // Keep for backward compatibility
-      sessionId: body.sessionId || 'anonymous',
-      userId: body.userId,
+      message: messageValidation.sanitized!,
+      tools: Array.isArray(sanitizedBody.tools) ? sanitizedBody.tools.filter((t: any) => typeof t === 'string').slice(0, 5) : [], // Max 5 tools
+      tool: sanitizedBody.tool || 'default', // Keep for backward compatibility
+      sessionId: sanitizedBody.sessionId || 'anonymous',
+      userId: sanitizedBody.userId,
       timestamp: new Date().toISOString(),
-      metadata: {
-        userAgent: request.headers.get('user-agent'),
-        origin: request.headers.get('origin')
-      }
+      // Removed metadata to prevent information disclosure
     };
 
     console.log('🔌 Sending to n8n webhook:', webhookUrl);
     console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
-    // Forward request to n8n webhook
+    // Get authentication headers
+    const authHeaders = getAuthHeaders(payload);
+    
+    // Forward request to n8n webhook with authentication
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        ...authHeaders
       },
       body: JSON.stringify(payload)
     });

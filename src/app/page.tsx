@@ -35,7 +35,6 @@ export default function LawyerChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [showCitationPanel, setShowCitationPanel] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<any>(null);
@@ -175,8 +174,8 @@ export default function LawyerChat() {
     try {
       const response = await fetch('/api/chats');
       if (response.ok) {
-        const data = await response.json();
-        setChatHistory(data);
+        // Chat history is now managed by TaskBar component
+        await response.json(); // Consume response to prevent memory leak
       }
     } catch (error) {
       console.error('Error fetching chat history:', error);

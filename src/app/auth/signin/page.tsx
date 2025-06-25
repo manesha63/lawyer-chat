@@ -3,6 +3,7 @@
 import { signIn, getSession } from 'next-auth/react';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useSidebarStore } from '@/store/sidebar';
 import DarkModeWrapper from '@/components/DarkModeWrapper';
 
@@ -73,7 +74,7 @@ function SignInContent() {
 
   return (
     <>
-      <DarkModeWrapper />
+      <DarkModeWrapper><></></DarkModeWrapper>
       <div className={`min-h-screen ${isDarkMode ? 'bg-[#1a1b1e]' : 'bg-gray-50'} flex items-center justify-center p-4`}>
         <div className="max-w-lg w-full">
           {/* Logo and Header */}
@@ -102,7 +103,7 @@ function SignInContent() {
                 <p className={`text-sm text-center ${
                   isDarkMode ? 'text-red-400' : 'text-red-600'
                 }`}>
-                  {error || getErrorMessage(urlError)}
+                  {error || (urlError ? getErrorMessage(urlError) : '')}
                 </p>
               </div>
             )}
@@ -181,6 +182,20 @@ function SignInContent() {
               </div>
             </form>
 
+            {/* Create Account Link */}
+            <div className="mt-6 text-center">
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Don&apos;t have an account?{' '}
+                <Link
+                  href="/auth/register"
+                  className={`font-medium ${
+                    isDarkMode ? 'text-[#C7A562] hover:text-[#B59552]' : 'text-[#004A84] hover:text-[#003A6C]'
+                  }`}
+                >
+                  Create Account
+                </Link>
+              </p>
+            </div>
           </div>
 
           {/* Guest Access */}
@@ -216,7 +231,7 @@ export default function SignIn() {
   
   return (
     <>
-      <DarkModeWrapper />
+      <DarkModeWrapper><></></DarkModeWrapper>
       <Suspense fallback={
         <div className={`min-h-screen ${isDarkMode ? 'bg-[#1a1b1e]' : 'bg-gray-50'} flex items-center justify-center`}>
           <div className={`w-8 h-8 border-2 ${isDarkMode ? 'border-gray-400' : 'border-blue-600'} border-t-transparent rounded-full animate-spin`}></div>
